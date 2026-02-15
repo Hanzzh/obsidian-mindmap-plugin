@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连线指向准确性验证测试</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .mind-map-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: auto;
+            background: white;
+            position: relative;
+        }
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-width: 450px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .debug-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .debug-log {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .debug-log li {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .debug-log .success {
+            color: #2e7d32;
+            background: #e8f5e8;
+        }
+        .debug-log .info {
+            color: #1976d2;
+            background: #e3f2fd;
+        }
+        .debug-log .warning {
+            color: #f57c00;
+            background: #fff3e0;
+        }
+        .connection-point {
+            fill: #ff4444;
+            stroke: #fff;
+            stroke-width: 2;
+        }
+        .center-line {
+            stroke: #ff4444;
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+            opacity: 0.7;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .node-rect {
+            stroke-width: 1;
+        }
+        .node-rect.L0 { fill: #2972f4; stroke: #2972f4; }
+        .node-rect.L1 { fill: #4285f4; stroke: #4285f4; }
+        .node-rect.L2 { fill: #f3f5f7; stroke: #ddd; }
+        .node-rect.L3 { fill: #f8f9fa; stroke: #eee; }
+        .node-rect.L4 { fill: #fafbfc; stroke: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 连线指向准确性验证测试</h1>
+        <p>验证连线是否准确指向节点的垂直中心位置</p>
+
+        <div class="controls">
+            <button onclick="renderMindMap()">渲染思维导图</button>
+            <button onclick="analyzeConnections()">分析连线指向</button>
+            <button onclick="showConnectionPoints()">显示连接点</button>
+            <button onclick="hideConnectionPoints()">隐藏连接点</button>
+            <button onclick="clearDebugInfo()">清空调试信息</button>
+            <button onclick="exportAnalysisData()">导出分析数据</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="mind-map-container">
+            <svg id="mindmap" width="1400" height="800" style="background: white;">
+                <defs>
+                    <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#f8f8f8;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <g id="content-group"></g>
+                <g id="center-line-group"></g>
+                <g id="connection-point-group"></g>
+                <g id="link-group"></g>
+                <g id="node-group"></g>
+            </svg>
+        </div>
+    </div>
+
+    <div class="debug-info">
+        <h3>🔍 连线指向分析</h3>
+        <ul class="debug-log" id="debug-log">
+            <li class="info">等待渲染思维导图...</li>
+        </ul>
+    </div>
+
+    <script>
+        // 完全基于当前Obsidian插件实现的配置
+        const layoutConfig = {
+            minNodeGap: 25,
+            lineOffset: 8,
+            horizontalSpacing: 220,
+            verticalSpacing: 110,
+            minVerticalGap: 25,
+            treeHeight: 800,
+            treeWidth: 1400,
+            nodeHeightBuffer: 15,
+        };
+
+        // 文本测量缓存
+        const textMeasurementCache = new Map();
+
+        // 专门用于连线测试的数据结构
+        const connectionTestData = {
+            name: "连线测试根节点",
+            children: [
+                {
+                    name: "第一层分支A",
+                    children: [
+                        {
+                            name: "第二层节点A1",
+                            children: [
+                                { name: "第三层节点A1-1" },
+                                { name: "第三层节点A1-2" },
+                                { name: "第三层节点A1-3" }
+                            ]
+                        },
+                        {
+                            name: "第二层节点A2",
+                            children: [
+                                { name: "第三层节点A2-1" },
+                                { name: "第三层节点A2-2" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "第一层分支B",
+                    children: [
+                        {
+                            name: "第二层节点B1",
+                            children: [
+                                { name: "第三层节点B1-1" },
+                                { name: "第三层节点B1-2" },
+                                { name: "第三层节点B1-3" },
+                                { name: "第三层节点B1-4" }
+                            ]
+                        },
+                        {
+                            name: "第二层节点B2",
+                            children: [
+                                { name: "第三层节点B2-1" },
+                                { name: "第三层节点B2-2" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "第一层分支C",
+                    children: [
+                        { name: "第二层节点C1" },
+                        { name: "第二层节点C2" },
+                        { name: "第二层节点C3" }
+                    ]
+                }
+            ]
+        };
+
+        let nodes = [];
+        let links = [];
+        let connectionAnalysis = [];
+
+        // 调试日志函数
+        function addDebugLog(message, type = 'info') {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logItem = document.createElement('li');
+            logItem.className = type;
+            logItem.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            debugLog.appendChild(logItem);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        // 完全复现插件的getNodeDimensions方法
+        function getNodeDimensions(depth, text) {
+            const cacheKey = `${depth}-${text}-${text.length}`;
+            if (textMeasurementCache.has(cacheKey)) {
+                return textMeasurementCache.get(cacheKey);
+            }
+
+            const cleanedText = text.trim();
+            let fontSize, fontWeight, maxWidth, minWidth, padding;
+
+            if (depth === 0) {
+                fontSize = "20px";
+                fontWeight = "bold";
+                maxWidth = null;
+                minWidth = 120;
+                padding = 24;
+            } else if (depth === 1) {
+                fontSize = "18px";
+                fontWeight = "bold";
+                maxWidth = null;
+                minWidth = 110;
+                padding = 20;
+            } else {
+                fontSize = "13px"; // 紧凑化：从14px减少到13px
+                fontWeight = "normal";
+                maxWidth = null;
+                minWidth = 70; // 从80px减少到70px
+                padding = 12; // 从16px减少到12px (-25%)
+            }
+
+            const fontSizeNum = parseInt(fontSize);
+            const textLength = cleanedText.length;
+            const charWidth = fontSizeNum * 0.6;
+            const textWidth = textLength * charWidth;
+            const lines = [cleanedText];
+            const textHeight = fontSizeNum * 1.2 * lines.length;
+
+            const safetyBuffer = Math.max(8, textWidth * 0.05);
+            const width = Math.max(textWidth + padding * 2 + safetyBuffer, minWidth);
+            const height = Math.max(textHeight + padding * 2, fontSizeNum * 2.5);
+
+            const textX = width / 2;
+            const textY = height / 2;
+
+            const result = {
+                width,
+                height,
+                textX,
+                textY,
+                fontSize,
+                fontWeight,
+                lines,
+                padding,
+                minWidth,
+                maxWidth
+            };
+
+            textMeasurementCache.set(cacheKey, result);
+            return result;
+        }
+
+        // 动态树高度计算
+        function calculateDynamicTreeHeight(root) {
+            let maxDepth = 0;
+            let nodesAtDepth = {};
+
+            root.each(node => {
+                maxDepth = Math.max(maxDepth, node.depth);
+                if (!nodesAtDepth[node.depth]) {
+                    nodesAtDepth[node.depth] = [];
+                }
+                nodesAtDepth[node.depth].push(node);
+            });
+
+            let totalHeight = 0;
+            for (let depth = 0; depth <= maxDepth; depth++) {
+                const nodes = nodesAtDepth[depth] || [];
+                let layerHeight = 60;
+
+                let depthMultiplier = 1.0;
+                if (depth === 0) {
+                    depthMultiplier = 0.8;
+                } else if (depth === 1) {
+                    depthMultiplier = 1.0;
+                } else if (depth === 2) {
+                    depthMultiplier = 1.3;
+                } else if (depth === 3) {
+                    depthMultiplier = 1.8;
+                } else {
+                    depthMultiplier = 2.2 + (depth - 4) * 0.3;
+                }
+
+                const verticalSpacing = layoutConfig.verticalSpacing * depthMultiplier;
+                const nodeCount = nodes.length;
+                if (nodeCount > 3) {
+                    const nodeCountMultiplier = 1 + (nodeCount - 3) * 0.1;
+                    totalHeight += layerHeight + (verticalSpacing * nodeCountMultiplier);
+                } else {
+                    totalHeight += layerHeight + verticalSpacing;
+                }
+            }
+
+            const minHeight = Math.max(totalHeight, layoutConfig.treeHeight);
+            const depthBuffer = Math.max(100, maxDepth * 25);
+            return minHeight + depthBuffer;
+        }
+
+        // 计算连接点坐标（完全复现插件逻辑）
+        function getLinkConnectionPoints(link, offsetX, offsetY) {
+            const sourceDimensions = getNodeDimensions(link.source.depth, link.source.data.name);
+            const targetDimensions = getNodeDimensions(link.target.depth, link.target.data.name);
+
+            const sourcePadding = sourceDimensions.padding;
+            const targetPadding = targetDimensions.padding;
+            const sourceContentWidth = sourceDimensions.width - sourcePadding * 2;
+            const targetContentWidth = targetDimensions.width - targetPadding * 2;
+
+            // 源节点连接点（右侧中间）
+            const sourceX = link.source.y + sourcePadding + sourceContentWidth + layoutConfig.lineOffset + offsetX;
+            const sourceY = link.source.x + sourceDimensions.height / 2 + offsetY;
+
+            // 目标节点连接点（左侧中间）
+            const targetX = link.target.y + targetPadding - layoutConfig.lineOffset + offsetX;
+            const targetY = link.target.x + targetDimensions.height / 2 + offsetY;
+
+            return {
+                sourceX, sourceY, targetX, targetY,
+                sourceCenterY: link.source.x + sourceDimensions.height / 2,
+                targetCenterY: link.target.x + targetDimensions.height / 2,
+                sourceHeight: sourceDimensions.height,
+                targetHeight: targetDimensions.height
+            };
+        }
+
+        // 渲染思维导图
+        function renderMindMap() {
+            addDebugLog('🎨 开始渲染用于连线测试的思维导图...', 'info');
+
+            const svg = d3.select("#mindmap");
+            const contentGroup = d3.select("#content-group");
+            const linkGroup = d3.select("#link-group");
+            const nodeGroup = d3.select("#node-group");
+
+            // 清空现有内容
+            contentGroup.selectAll("*").remove();
+            linkGroup.selectAll("*").remove();
+            nodeGroup.selectAll("*").remove();
+
+            // 创建层次结构
+            const root = d3.hierarchy(connectionTestData);
+
+            // 计算动态树高度
+            const dynamicTreeHeight = calculateDynamicTreeHeight(root);
+
+            // 创建树布局
+            const treeLayout = d3.tree()
+                .size([dynamicTreeHeight, layoutConfig.treeWidth])
+                .separation((a, b) => {
+                    // 简化的分离计算
+                    const siblingDepth = Math.max(a.depth, b.depth);
+                    let depthMultiplier = 1.0;
+                    if (siblingDepth === 0) depthMultiplier = 1.0;
+                    else if (siblingDepth === 1) depthMultiplier = 1.15;
+                    else if (siblingDepth === 2) depthMultiplier = 1.3;
+                    else if (siblingDepth === 3) depthMultiplier = 1.8;
+                    else depthMultiplier = 2.2 + (siblingDepth - 4) * 0.2;
+
+                    const baseSeparation = a.parent === b.parent ? 1 : 2;
+                    return baseSeparation * depthMultiplier;
+                });
+
+            const treeData = treeLayout(root);
+
+            // 居中偏移
+            const offsetX = 100;
+            const offsetY = 50;
+
+            // 存储节点和链接数据
+            nodes = [];
+            links = [];
+
+            // 渲染连线
+            const linkElements = linkGroup.selectAll("path")
+                .data(treeData.links())
+                .enter()
+                .append("path")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y + offsetX)
+                    .y(d => d.x + offsetY))
+                .attr("fill", "none")
+                .attr("stroke", "#999")
+                .attr("stroke-width", 2);
+
+            // 记录链接数据
+            links = treeData.links().map(link => {
+                const points = getLinkConnectionPoints(link, offsetX, offsetY);
+                return {
+                    source: {
+                        name: link.source.data.name,
+                        depth: link.source.depth,
+                        x: link.source.x + offsetY,
+                        y: link.source.y + offsetX,
+                        height: getNodeDimensions(link.source.depth, link.source.data.name).height
+                    },
+                    target: {
+                        name: link.target.data.name,
+                        depth: link.target.depth,
+                        x: link.target.x + offsetY,
+                        y: link.target.y + offsetX,
+                        height: getNodeDimensions(link.target.depth, link.target.data.name).height
+                    },
+                    connectionPoints: points
+                };
+            });
+
+            // 渲染节点
+            const nodeElements = nodeGroup.selectAll("g")
+                .data(treeData.descendants())
+                .enter()
+                .append("g")
+                .attr("transform", d => {
+                    const x = d.y + offsetX;
+                    const y = d.x + offsetY;
+                    const dimensions = getNodeDimensions(d.depth, d.data.name);
+
+                    const nodeInfo = {
+                        name: d.data.name,
+                        depth: d.depth,
+                        x: y,
+                        y: x,
+                        width: dimensions.width,
+                        height: dimensions.height
+                    };
+                    nodes.push(nodeInfo);
+
+                    return `translate(${x}, ${y})`;
+                });
+
+            // 添加节点矩形
+            nodeElements.append("rect")
+                .attr("class", d => `node-rect L${d.depth}`)
+                .attr("width", d => getNodeDimensions(d.depth, d.data.name).width)
+                .attr("height", d => getNodeDimensions(d.depth, d.data.name).height)
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("rx", 6)
+                .attr("ry", 6)
+                .style("cursor", "pointer");
+
+            // 添加文本
+            nodeElements.append("text")
+                .attr("x", d => getNodeDimensions(d.depth, d.data.name).textX)
+                .attr("y", d => getNodeDimensions(d.depth, d.data.name).textY)
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .style("font-size", d => getNodeDimensions(d.depth, d.data.name).fontSize)
+                .style("font-weight", d => getNodeDimensions(d.depth, d.data.name).fontWeight)
+                .style("fill", d => d.depth === 0 ? "#ffffff" : "#333333")
+                .style("pointer-events", "none")
+                .text(d => d.data.name);
+
+            addDebugLog(`✅ 渲染完成：${nodes.length} 个节点，${links.length} 条连线`, 'success');
+            showStatus(`思维导图渲染完成，共 ${nodes.length} 个节点`, 'success');
+        }
+
+        // 分析连线指向准确性
+        function analyzeConnections() {
+            if (nodes.length === 0 || links.length === 0) {
+                showStatus('请先渲染思维导图', 'error');
+                return;
+            }
+
+            addDebugLog('🔍 开始分析连线指向准确性...', 'info');
+            connectionAnalysis = [];
+            let totalConnections = 0;
+            let accurateConnections = 0;
+
+            links.forEach((link, index) => {
+                const sourceNode = nodes.find(n => n.name === link.source.name);
+                const targetNode = nodes.find(n => n.name === link.target.name);
+
+                if (sourceNode && targetNode) {
+                    const analysis = analyzeSingleConnection(link, sourceNode, targetNode, index);
+                    connectionAnalysis.push(analysis);
+                    totalConnections++;
+
+                    if (analysis.isAccurate) {
+                        accurateConnections++;
+                    }
+
+                    addDebugLog(`📏 连线 ${index + 1}: ${sourceNode.name} → ${targetNode.name}`,
+                        analysis.isAccurate ? 'success' : 'warning');
+
+                    if (!analysis.isAccurate) {
+                        addDebugLog(`   ⚠️ 偏差: 源${analysis.sourceDeviation.toFixed(1)}px, 目标${analysis.targetDeviation.toFixed(1)}px`, 'warning');
+                    }
+                }
+            });
+
+            const accuracyRate = (accurateConnections / totalConnections * 100).toFixed(1);
+
+            if (accurateConnections === totalConnections) {
+                addDebugLog(`✅ 所有连线指向准确！(${totalConnections}/${totalConnections})`, 'success');
+                showStatus(`连线指向测试通过：${accuracyRate}% 准确率`, 'success');
+            } else {
+                addDebugLog(`❌ 发现 ${totalConnections - accurateConnections} 条连线指向不准确`, 'warning');
+                showStatus(`连线指向测试失败：${accuracyRate}% 准确率`, 'error');
+            }
+        }
+
+        // 分析单条连线的指向准确性
+        function analyzeSingleConnection(link, sourceNode, targetNode, index) {
+            const points = link.connectionPoints;
+
+            // 计算源节点的实际垂直中心
+            const expectedSourceY = sourceNode.y + sourceNode.height / 2;
+            const sourceDeviation = Math.abs(points.sourceY - expectedSourceY);
+
+            // 计算目标节点的实际垂直中心
+            const expectedTargetY = targetNode.y + targetNode.height / 2;
+            const targetDeviation = Math.abs(points.targetY - expectedTargetY);
+
+            const isAccurate = sourceDeviation < 1 && targetDeviation < 1; // 允许1px误差
+
+            return {
+                index,
+                linkName: `${sourceNode.name} → ${targetNode.name}`,
+                sourceNode: sourceNode.name,
+                targetNode: targetNode.name,
+                isAccurate,
+                sourceDeviation,
+                targetDeviation,
+                expectedSourceY,
+                expectedTargetY,
+                actualSourceY: points.sourceY,
+                actualTargetY: points.targetY,
+                sourceHeight: sourceNode.height,
+                targetHeight: targetNode.height
+            };
+        }
+
+        // 显示连接点和中心线
+        function showConnectionPoints() {
+            const svg = d3.select("#mindmap");
+            const centerLineGroup = d3.select("#center-line-group");
+            const connectionPointGroup = d3.select("#connection-point-group");
+
+            // 清空现有标记
+            centerLineGroup.selectAll("*").remove();
+            connectionPointGroup.selectAll("*").remove();
+
+            // 为每个节点绘制中心线
+            nodes.forEach(node => {
+                const centerX = node.y + node.width / 2;
+                const centerY = node.y + node.height / 2;
+
+                // 垂直中心线
+                centerLineGroup.append("line")
+                    .attr("class", "center-line")
+                    .attr("x1", centerX)
+                    .attr("y1", node.y)
+                    .attr("x2", centerX)
+                    .attr("y2", node.y + node.height);
+
+                // 水平中心线
+                centerLineGroup.append("line")
+                    .attr("class", "center-line")
+                    .attr("x1", node.y)
+                    .attr("y1", centerY)
+                    .attr("x2", node.y + node.width)
+                    .attr("y2", centerY);
+            });
+
+            // 绘制连接点
+            links.forEach(link => {
+                const points = link.connectionPoints;
+
+                // 源节点连接点
+                connectionPointGroup.append("circle")
+                    .attr("class", "connection-point")
+                    .attr("cx", points.sourceX)
+                    .attr("cy", points.sourceY)
+                    .attr("r", 5);
+
+                // 目标节点连接点
+                connectionPointGroup.append("circle")
+                    .attr("class", "connection-point")
+                    .attr("cx", points.targetX)
+                    .attr("cy", points.targetY)
+                    .attr("r", 5);
+            });
+
+            addDebugLog('🎯 已显示节点中心线和连接点', 'info');
+        }
+
+        // 隐藏连接点和中心线
+        function hideConnectionPoints() {
+            d3.select("#center-line-group").selectAll("*").remove();
+            d3.select("#connection-point-group").selectAll("*").remove();
+            addDebugLog('🙈 已隐藏节点中心线和连接点', 'info');
+        }
+
+        // 清空调试信息
+        function clearDebugInfo() {
+            const debugLog = document.getElementById('debug-log');
+            debugLog.innerHTML = '<li class="info">调试信息已清空</li>';
+        }
+
+        // 导出分析数据
+        function exportAnalysisData() {
+            const analysisData = {
+                timestamp: new Date().toISOString(),
+                testType: "connection-accuracy",
+                layoutConfig: layoutConfig,
+                nodes: nodes,
+                links: links,
+                connectionAnalysis: connectionAnalysis,
+                summary: {
+                    totalNodes: nodes.length,
+                    totalLinks: links.length,
+                    accurateConnections: connectionAnalysis.filter(a => a.isAccurate).length,
+                    accuracyRate: connectionAnalysis.length > 0 ?
+                        (connectionAnalysis.filter(a => a.isAccurate).length / connectionAnalysis.length * 100).toFixed(1) : 0
+                }
+            };
+
+            const dataStr = JSON.stringify(analysisData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+            const exportLink = document.createElement('a');
+            exportLink.setAttribute('href', dataUri);
+            exportLink.setAttribute('download', `connection-analysis-${Date.now()}.json`);
+            document.body.appendChild(exportLink);
+            exportLink.click();
+            document.body.removeChild(exportLink);
+
+            addDebugLog('📊 连线分析数据已导出', 'success');
+        }
+
+        // 页面加载时自动渲染
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                renderMindMap();
+                setTimeout(() => {
+                    showConnectionPoints();
+                    setTimeout(() => {
+                        analyzeConnections();
+                    }, 500);
+                }, 500);
+            }, 100);
+        });
+    </script>
+</body>
+</html>

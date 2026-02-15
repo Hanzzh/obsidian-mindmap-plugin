@@ -1,0 +1,637 @@
+/* ========================================================================
+   Mind Map Plugin Styles
+   ======================================================================== */
+
+/* ------------------------------------------------------------------------
+   Mind Map Container
+   ------------------------------------------------------------------------ */
+
+.mind-map-content {
+    width: 100%;
+    height: 100%;
+}
+
+/* ------------------------------------------------------------------------
+   Node Styles
+   ------------------------------------------------------------------------ */
+
+/* Default node rectangle */
+.node-rect {
+    transition: all 0.2s ease;
+}
+
+/* Selected node - 重要：高亮边框 */
+.selected-rect {
+    stroke: var(--interactive-accent) !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 8px rgba(41, 114, 244, 0.4));
+    animation: pulse-selection 2s infinite;
+}
+
+@keyframes pulse-selection {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(41, 114, 244, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(41, 114, 244, 0.6));
+    }
+}
+
+/* Hovered node - 重要：悬停效果 */
+.hovered-rect {
+    stroke: var(--interactive-accent-hover) !important;
+    stroke-width: 2px !important;
+    filter: drop-shadow(0 0 6px rgba(100, 100, 100, 0.3));
+    cursor: pointer;
+}
+
+/* Node in editing mode */
+.node-editing .node-rect {
+    stroke: var(--color-green) !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 5, 3;
+    animation: dash-edit 1s linear infinite;
+}
+
+@keyframes dash-edit {
+    to {
+        stroke-dashoffset: -16;
+    }
+}
+
+/* ------------------------------------------------------------------------
+   Text Layer Styles
+   ------------------------------------------------------------------------ */
+
+/* Node text layer container */
+.node-text-layer {
+    overflow: visible;
+}
+
+/* Unified text element - 显示和编辑统一 */
+.node-unified-text {
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+/* 编辑模式样式 - 重要 */
+.node-unified-text.editing {
+    cursor: text !important;
+    user-select: text !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 0 0 2px var(--interactive-accent) !important;
+    border-radius: 4px;
+    padding: 4px 8px !important;
+    z-index: 1000;
+}
+
+/* 编辑模式下的文字颜色 */
+.node-unified-text.editing[style*="color: rgb(0, 0, 0)"],
+.node-unified-text.editing[style*="color: #000000"] {
+    color: #000000 !important;
+}
+
+/* 编辑模式下的浅色文字（根节点） */
+.node-unified-text.editing[style*="color: rgb(255, 255, 255)"],
+.node-unified-text.editing[style*="color: #ffffff"] {
+    color: #000000 !important; /* 编辑时改为深色以便阅读 */
+}
+
+/* ------------------------------------------------------------------------
+   Plus Button Styles
+   ------------------------------------------------------------------------ */
+
+.plus-button-group {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.plus-button-group:hover .plus-button-bg {
+    fill: var(--interactive-accent-hover) !important;
+    opacity: 1 !important;
+    transform: scale(1.1);
+}
+
+.plus-button-bg {
+    transition: all 0.2s ease;
+}
+
+.plus-button-text {
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+/* ------------------------------------------------------------------------
+   Link Styles
+   ------------------------------------------------------------------------ */
+
+.links {
+    pointer-events: none;
+}
+
+.root-to-first-level-link,
+.rounded-link {
+    transition: stroke-opacity 0.2s ease;
+}
+
+.root-to-first-level-link:hover,
+.rounded-link:hover {
+    stroke-opacity: 1 !important;
+}
+
+/* ------------------------------------------------------------------------
+   UI Notification Styles
+   ------------------------------------------------------------------------ */
+
+/* Editing hint tooltip */
+.editing-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: var(--font-ui-small);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.editing-hint.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* Validation error notification */
+.mind-map-validation-error {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    background: var(--background-modifier-error);
+    color: var(--text-error);
+    border: 1px solid var(--color-red);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: var(--font-ui-smaller);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1002;
+    max-width: 300px;
+    word-wrap: break-word;
+    animation: slide-in-right 0.3s ease;
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Success notification */
+.mind-map-success-message {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    background: var(--background-modifier-success);
+    color: var(--text-success);
+    border: 1px solid var(--color-green);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: var(--font-ui-smaller);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1002;
+    max-width: 300px;
+    word-wrap: break-word;
+    animation: slide-in-right 0.3s ease;
+}
+
+/* ------------------------------------------------------------------------
+   Responsive Design
+   ------------------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+    .editing-hint {
+        bottom: 20px;
+        left: 10px;
+        right: 10px;
+        transform: translateY(100px);
+    }
+
+    .editing-hint.show {
+        transform: translateY(0);
+    }
+
+    .mind-map-validation-error,
+    .mind-map-success-message {
+        top: 20px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* ------------------------------------------------------------------------
+   AI Configuration Styles
+   ------------------------------------------------------------------------ */
+
+/* Security notice */
+.setting-item-security-notice {
+	margin: 12px 0;
+	padding: 12px 16px;
+	background-color: rgba(43, 180, 77, 0.1);
+	border-left: 4px solid var(--color-green);
+	border-radius: 4px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--text-normal);
+}
+
+.setting-item-security-notice code {
+	background-color: rgba(0, 0, 0, 0.1);
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}
+
+/* AI test result message */
+.ai-test-result {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    animation: fadeIn 0.3s ease;
+}
+
+.ai-test-result.success {
+    background-color: rgba(43, 180, 77, 0.15);
+    color: var(--text-success);
+    border: 1px solid var(--color-green);
+}
+
+.ai-test-result.error {
+    background-color: rgba(225, 85, 85, 0.15);
+    color: var(--text-error);
+    border: 1px solid var(--color-red);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* AI section headers in settings */
+.setting-item-description {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+/* Prompt variables reference */
+.prompt-variables-reference {
+    margin: 16px 0;
+    padding: 12px 16px;
+    background-color: rgba(67, 138, 249, 0.1);
+    border-left: 4px solid var(--color-accent);
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.prompt-variables-reference strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-normal);
+}
+
+.prompt-variables-reference ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.prompt-variables-reference li {
+    margin: 4px 0;
+}
+
+.prompt-variables-reference code {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-monospace);
+    font-size: 12px;
+    color: var(--code-normal);
+}
+
+/* TextArea for prompts */
+.setting-item-info textarea {
+    min-height: 200px;
+    max-height: 400px;
+    width: 100%;
+    font-family: var(--font-monospace);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: none; /* 禁止调整大小 */
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    display: block; /* 独占一行 */
+}
+
+/* Larger textareas for prompt templates */
+.setting-item textarea {
+    min-height: 250px !important;
+    max-height: 500px !important;
+    width: 100% !important;
+    resize: none !important; /* 禁止调整大小 */
+    display: block !important; /* 确保独占一行 */
+}
+
+/* Ensure setting item control takes full width */
+.setting-item-control {
+    width: 100% !important;
+}
+
+/* TextArea container full width */
+.setting-item-info textarea {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* Make all setting containers wider for prompts */
+.setting-item:has(textarea) {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Ensure textarea containers are full width */
+.setting-item-info {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.setting-item-control {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Specifically target prompt template textareas */
+.setting-item textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ------------------------------------------------------------------------
+   AI Suggestions Styles
+   ------------------------------------------------------------------------ */
+
+/* AI 建议按钮 */
+.ai-suggest-button-group {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.ai-suggest-button-group:hover {
+    opacity: 1 !important;
+}
+
+.ai-suggest-button-bg {
+    transition: transform 0.2s, r 0.2s;
+}
+
+.ai-suggest-button-group:hover .ai-suggest-button-bg {
+    transform: scale(1.1);
+    r: 11;
+}
+
+/* AI 建议列表面板 */
+.ai-suggestions-panel {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 320px;
+    max-height: 70vh;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translate(50px, -50%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, -50%);
+    }
+}
+
+/* AI 建议面板头部 */
+.ai-suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+}
+
+.ai-suggestions-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-suggestions-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.ai-suggestions-close:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+/* 操作按钮容器 */
+.ai-suggestions-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 全选按钮 */
+.ai-suggestions-select-all {
+    background: var(--interactive-accent);
+    border: none;
+    color: var(--text-on-accent);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.ai-suggestions-select-all:hover {
+    background: var(--interactive-accent-hover);
+    transform: scale(1.05);
+}
+
+.ai-suggestions-select-all:active {
+    transform: scale(0.98);
+}
+
+/* AI 建议列表 */
+.ai-suggestions-list {
+    list-style: none;
+    padding: 12px;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* AI 建议项 */
+.ai-suggestion-item {
+    padding: 12px 16px;
+    margin: 4px 0;
+    background: var(--background-secondary);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 对勾和文本之间的间距 */
+}
+
+/* 对勾占位 */
+.ai-suggestion-checkmark {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--text-success);
+    font-weight: bold;
+    text-align: center;
+    line-height: 20px;
+}
+
+/* 建议文本 */
+.ai-suggestion-text {
+    flex: 1;
+}
+
+/* 未选择时的悬浮效果 */
+.ai-suggestion-item:not(.ai-suggestion-item-selected):hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border-hover);
+    transform: translateX(4px);
+}
+
+.ai-suggestion-item:not(.ai-suggestion-item-selected):active {
+    transform: translateX(2px);
+}
+
+/* 已选择状态 */
+.ai-suggestion-item-selected {
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.ai-suggestion-item-selected:hover {
+    background: var(--background-modifier-border);
+    border-color: transparent;
+    transform: none; /* 移除悬浮动画 */
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .ai-suggestions-panel {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-height: 50vh;
+        transform: none;
+        border-radius: 12px 12px 0 0;
+        animation: slideInUp 0.3s ease;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-suggestion-item {
+        padding: 16px;
+        font-size: 16px;
+    }
+}
+
+/* 滚动条样式 */
+.ai-suggestions-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ai-suggestions-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ai-suggestions-list::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.ai-suggestions-list::-webkit-scrollbar-thumb:hover {
+    background: var(--background-modifier-border-hover);
+}

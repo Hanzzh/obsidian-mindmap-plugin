@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图重叠测试 - 基于Obsidian插件实现</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .mind-map-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: auto;
+            background: white;
+        }
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .debug-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .debug-log {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .debug-log li {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .debug-log .error {
+            color: #d32f2f;
+            background: #ffebee;
+        }
+        .debug-log .success {
+            color: #2e7d32;
+            background: #e8f5e8;
+        }
+        .debug-log .info {
+            color: #1976d2;
+            background: #e3f2fd;
+        }
+        .overlap-highlight {
+            fill: red;
+            fill-opacity: 0.3;
+            stroke: red;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 思维导图重叠测试</h1>
+        <p>基于当前Obsidian插件的实际实现进行测试 | <a href="test-data.md" target="_blank">查看测试数据</a></p>
+
+        <div class="controls">
+            <button onclick="renderMindMap()">渲染思维导图</button>
+            <button onclick="detectAndHighlightOverlaps()">检测重叠</button>
+            <button onclick="clearDebugInfo()">清空调试信息</button>
+            <button onclick="exportDebugData()">导出调试数据</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="mind-map-container">
+            <svg id="mindmap" width="1600" height="1200" style="background: white;">
+                <defs>
+                    <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <g id="content-group"></g>
+                <g id="link-group"></g>
+                <g id="node-group"></g>
+                <g id="overlap-group"></g>
+            </svg>
+        </div>
+    </div>
+
+    <div class="debug-info">
+        <h3>🔍 调试信息</h3>
+        <ul class="debug-log" id="debug-log">
+            <li class="info">等待渲染思维导图...</li>
+        </ul>
+    </div>
+
+    <script>
+        // 完全基于当前Obsidian插件实现的配置（最新优化）
+        const layoutConfig = {
+            minNodeGap: 25,           // 最小节点间距（增加）
+            lineOffset: 8,            // 连线与节点边缘的安全距离
+            horizontalSpacing: 220,   // 水平基础间距
+            verticalSpacing: 110,     // 垂直基础间距（进一步增加）
+            minVerticalGap: 25,       // 最小垂直间距（进一步增加）
+            treeHeight: 800,          // 树高度（动态计算）
+            treeWidth: 1400,          // 树宽度
+            nodeHeightBuffer: 15,     // 节点高度缓冲（增加安全边界）
+        };
+
+        // 文本测量缓存
+        const textMeasurementCache = new Map();
+
+        // 测试数据 - 使用实际项目中的复杂结构
+        const testData = {
+            name: "test-mindmap",
+            children: [
+                {
+                    name: "项目管理",
+                    children: [
+                        {
+                            name: "需求分析",
+                            children: [
+                                { name: "用户调研" },
+                                { name: "功能规划" },
+                                { name: "可行性评估" }
+                            ]
+                        },
+                        {
+                            name: "项目规划",
+                            children: [
+                                { name: "时间安排" },
+                                { name: "资源分配" },
+                                { name: "风险管理" }
+                            ]
+                        },
+                        {
+                            name: "开发执行",
+                            children: [
+                                {
+                                    name: "前端开发",
+                                    children: [
+                                        { name: "界面设计" },
+                                        { name: "功能实现" },
+                                        { name: "用户测试" }
+                                    ]
+                                },
+                                {
+                                    name: "后端开发",
+                                    children: [
+                                        { name: "数据库设计" },
+                                        { name: "API开发" },
+                                        { name: "性能优化" }
+                                    ]
+                                },
+                                {
+                                    name: "测试部署",
+                                    children: [
+                                        { name: "单元测试" },
+                                        { name: "集成测试" },
+                                        { name: "生产部署" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            name: "项目维护",
+                            children: [
+                                { name: "Bug修复" },
+                                { name: "功能更新" },
+                                { name: "性能监控" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "学习计划",
+                    children: [
+                        {
+                            name: "编程技能",
+                            children: [
+                                {
+                                    name: "前端技术",
+                                    children: [
+                                        { name: "HTMLCSS基础" },
+                                        { name: "JavaScript高级编程" },
+                                        { name: "ReactVue框架" }
+                                    ]
+                                },
+                                {
+                                    name: "后端技术",
+                                    children: [
+                                        { name: "Node.js开发" },
+                                        { name: "数据库设计" },
+                                        { name: "系统架构设计" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            name: "软技能",
+                            children: [
+                                { name: "沟通能力" },
+                                { name: "团队协作" },
+                                { name: "项目管理方法" },
+                                { name: "时间管理技巧" }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let nodes = [];
+        let links = [];
+        let overlaps = [];
+
+        // 调试日志函数
+        function addDebugLog(message, type = 'info') {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logItem = document.createElement('li');
+            logItem.className = type;
+            logItem.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            debugLog.appendChild(logItem);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        // 完全复现插件的getNodeDimensions方法
+        function getNodeDimensions(depth, text) {
+            // 创建缓存键
+            const cacheKey = `${depth}-${text}-${text.length}`;
+
+            // 检查缓存
+            if (textMeasurementCache.has(cacheKey)) {
+                return textMeasurementCache.get(cacheKey);
+            }
+
+            const cleanedText = text.trim();
+            let fontSize, fontWeight, maxWidth, minWidth, padding;
+
+            if (depth === 0) {
+                fontSize = "20px";
+                fontWeight = "bold";
+                maxWidth = null;
+                minWidth = 120;
+                padding = 24;
+            } else if (depth === 1) {
+                fontSize = "18px";
+                fontWeight = "bold";
+                maxWidth = null;
+                minWidth = 110;
+                padding = 20;
+            } else {
+                fontSize = "13px"; // 紧凑化：从14px减少到13px
+                fontWeight = "normal";
+                maxWidth = null;
+                minWidth = 70; // 从80px减少到70px
+                padding = 12; // 从16px减少到12px (-25%)
+            }
+
+            const fontSizeNum = parseInt(fontSize);
+            const textLength = cleanedText.length;
+
+            // 基于实际文本测量（简化版本，模拟插件的测量逻辑）
+            const charWidth = fontSizeNum * 0.6; // 中文和英文字符的平均宽度
+            const textWidth = textLength * charWidth;
+
+            // 计算行数（假设不换行）
+            const lines = [cleanedText];
+            const textHeight = fontSizeNum * 1.2 * lines.length;
+
+            // 计算最终节点尺寸
+            const safetyBuffer = Math.max(8, textWidth * 0.05); // 5%缓冲或8px最小
+            const width = Math.max(textWidth + padding * 2 + safetyBuffer, minWidth);
+            const height = Math.max(textHeight + padding * 2, fontSizeNum * 2.5);
+
+            // 计算文字位置（居中对齐）
+            const textX = width / 2;
+            const textY = height / 2;
+
+            const result = {
+                width,
+                height,
+                textX,
+                textY,
+                fontSize,
+                fontWeight,
+                lines,
+                padding,
+                minWidth,
+                maxWidth
+            };
+
+            // 缓存计算结果
+            textMeasurementCache.set(cacheKey, result);
+            return result;
+        }
+
+        // 完全复现插件的calculateDynamicSeparation方法（最新修复版本）
+        function calculateDynamicSeparation(nodeA, nodeB) {
+            const aDimensions = getNodeDimensions(nodeA.depth, nodeA.name);
+            const bDimensions = getNodeDimensions(nodeB.depth, nodeB.name);
+
+            const aHeight = aDimensions.height;
+            const bHeight = bDimensions.height;
+            const maxHeight = Math.max(aHeight, bHeight);
+
+            // 智能垂直间距计算：基于实际节点高度 + 安全边界
+            const baseVerticalSpacing = layoutConfig.verticalSpacing;
+            const baseMinGap = layoutConfig.minVerticalGap;
+
+            // 基于实际节点高度的智能间距
+            const heightBasedVerticalGap = maxHeight + layoutConfig.nodeHeightBuffer + baseMinGap;
+            const verticalGap = Math.max(heightBasedVerticalGap, baseVerticalSpacing);
+
+            // 基于原间距系统的相对距离
+            const baseSeparation = nodeA.parent === nodeB.parent ? 1 : 2;
+
+            // 优化后的深度间距调整：重点解决第三层和第四层重叠
+            const siblingDepth = Math.max(nodeA.depth, nodeB.depth);
+            let depthMultiplier = 1.0;
+
+            if (siblingDepth === 0) {
+                depthMultiplier = 1.0; // 根节点：标准间距
+            } else if (siblingDepth === 1) {
+                depthMultiplier = 1.15; // 第1层：稍微增加
+            } else if (siblingDepth === 2) {
+                depthMultiplier = 1.3; // 第2层：适度增加
+            } else if (siblingDepth === 3) {
+                depthMultiplier = 1.8; // 第3层：显著增加
+            } else {
+                depthMultiplier = 2.2 + (siblingDepth - 4) * 0.2; // 第4层+：大幅增加
+            }
+
+            // 对于同层级兄弟节点的特殊处理（针对深层节点优化）
+            if (nodeA.parent === nodeB.parent && nodeA.x !== nodeB.x) {
+                const siblingVerticalGap = heightBasedVerticalGap * depthMultiplier;
+
+                // 为深层兄弟节点强制更大的安全间距
+                let minimumSafeGap = 1.2;
+                if (siblingDepth >= 4) {
+                    minimumSafeGap = 2.5; // 第4层+：强制2.5倍间距
+                } else if (siblingDepth >= 3) {
+                    minimumSafeGap = 2.0; // 第3层：强制2倍间距
+                }
+
+                return Math.max(siblingVerticalGap / layoutConfig.verticalSpacing, minimumSafeGap);
+            }
+
+            return baseSeparation * depthMultiplier;
+        }
+
+        // 动态树高度计算（最新修复版本）
+        function calculateDynamicTreeHeight(root) {
+            let maxDepth = 0;
+            let nodesAtDepth = {};
+
+            root.each(node => {
+                maxDepth = Math.max(maxDepth, node.depth);
+                if (!nodesAtDepth[node.depth]) {
+                    nodesAtDepth[node.depth] = [];
+                }
+                nodesAtDepth[node.depth].push(node);
+            });
+
+            let totalHeight = 0;
+            for (let depth = 0; depth <= maxDepth; depth++) {
+                const nodes = nodesAtDepth[depth] || [];
+                let layerHeight = 60; // 基础层高
+
+                // 精细化深度间距调整（同步修复第三层和第四层重叠）
+                let depthMultiplier = 1.0;
+                if (depth === 0) {
+                    depthMultiplier = 0.8; // 根节点：更紧凑
+                } else if (depth === 1) {
+                    depthMultiplier = 1.0; // 第1层：标准间距
+                } else if (depth === 2) {
+                    depthMultiplier = 1.3; // 第2层：适度增加
+                } else if (depth === 3) {
+                    depthMultiplier = 1.8; // 第3层：显著增加
+                } else {
+                    depthMultiplier = 2.2 + (depth - 4) * 0.3; // 第4层+：大幅增加
+                }
+
+                const verticalSpacing = layoutConfig.verticalSpacing * depthMultiplier;
+
+                // 基于节点数量的智能调整（更保守的增长）
+                const nodeCount = nodes.length;
+                if (nodeCount > 3) {
+                    const nodeCountMultiplier = 1 + (nodeCount - 3) * 0.1;
+                    totalHeight += layerHeight + (verticalSpacing * nodeCountMultiplier);
+                } else {
+                    totalHeight += layerHeight + verticalSpacing;
+                }
+            }
+
+            const minHeight = Math.max(totalHeight, layoutConfig.treeHeight);
+            const depthBuffer = Math.max(100, maxDepth * 25);
+            return minHeight + depthBuffer;
+        }
+
+        // 渲染思维导图
+        function renderMindMap() {
+            addDebugLog('🎨 开始渲染思维导图...', 'info');
+
+            const svg = d3.select("#mindmap");
+            const contentGroup = d3.select("#content-group");
+            const linkGroup = d3.select("#link-group");
+            const nodeGroup = d3.select("#node-group");
+            const overlapGroup = d3.select("#overlap-group");
+
+            // 清空现有内容
+            contentGroup.selectAll("*").remove();
+            linkGroup.selectAll("*").remove();
+            nodeGroup.selectAll("*").remove();
+            overlapGroup.selectAll("*").remove();
+
+            // 创建层次结构
+            const root = d3.hierarchy(testData);
+
+            // 计算动态树高度
+            const dynamicTreeHeight = calculateDynamicTreeHeight(root);
+
+            // 创建树布局
+            const treeLayout = d3.tree()
+                .size([dynamicTreeHeight, layoutConfig.treeWidth])
+                .separation((a, b) => calculateDynamicSeparation(a.data, b.data));
+
+            const treeData = treeLayout(root);
+
+            // 居中偏移
+            const offsetX = 100;
+            const offsetY = 50;
+
+            // 存储节点数据用于重叠检测
+            nodes = [];
+            links = [];
+
+            // 渲染连线
+            const linkElements = linkGroup.selectAll("path")
+                .data(treeData.links())
+                .enter()
+                .append("path")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y + offsetX)
+                    .y(d => d.x + offsetY))
+                .attr("fill", "none")
+                .attr("stroke", "#ccc")
+                .attr("stroke-width", 2);
+
+            links = treeData.links().map(link => ({
+                source: {
+                    name: link.source.data.name,
+                    depth: link.source.depth,
+                    x: link.source.x + offsetY,
+                    y: link.source.y + offsetX
+                },
+                target: {
+                    name: link.target.data.name,
+                    depth: link.target.depth,
+                    x: link.target.x + offsetY,
+                    y: link.target.y + offsetX
+                }
+            }));
+
+            // 渲染节点
+            const nodeElements = nodeGroup.selectAll("g")
+                .data(treeData.descendants())
+                .enter()
+                .append("g")
+                .attr("transform", d => {
+                    const x = d.y + offsetX;
+                    const y = d.x + offsetY;
+                    const dimensions = getNodeDimensions(d.depth, d.data.name);
+
+                    // 记录节点数据
+                    const nodeInfo = {
+                        name: d.data.name,
+                        depth: d.depth,
+                        x: y,
+                        y: x,
+                        width: dimensions.width,
+                        height: dimensions.height
+                    };
+                    nodes.push(nodeInfo);
+
+                    addDebugLog(`📍 Node "${d.data.name}" (L${d.depth}): 位置(${x.toFixed(1)}, ${y.toFixed(1)}) 尺寸${dimensions.width.toFixed(1)}×${dimensions.height.toFixed(1)}`, 'info');
+
+                    return `translate(${x}, ${y})`;
+                });
+
+            // 添加节点矩形
+            nodeElements.append("rect")
+                .attr("class", d => `node-rect node-L${d.depth}`)
+                .attr("width", d => getNodeDimensions(d.depth, d.data.name).width)
+                .attr("height", d => getNodeDimensions(d.depth, d.data.name).height)
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("rx", 6)
+                .attr("ry", 6)
+                .style("cursor", "pointer");
+
+            // 添加文本
+            nodeElements.append("text")
+                .attr("x", d => getNodeDimensions(d.depth, d.data.name).textX)
+                .attr("y", d => getNodeDimensions(d.depth, d.data.name).textY)
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .style("font-size", d => getNodeDimensions(d.depth, d.data.name).fontSize)
+                .style("font-weight", d => getNodeDimensions(d.depth, d.data.name).fontWeight)
+                .style("fill", d => d.depth === 0 ? "#ffffff" : "#000000")
+                .style("pointer-events", "none")
+                .text(d => d.data.name);
+
+            // 按层级统计
+            const levelStats = {};
+            nodes.forEach(node => {
+                levelStats[node.depth] = (levelStats[node.depth] || 0) + 1;
+            });
+
+            addDebugLog(`✅ 渲染完成：${nodes.length} 个节点`, 'success');
+            for (const [level, count] of Object.entries(levelStats)) {
+                addDebugLog(`  L${level}: ${count} 个节点`, 'info');
+            }
+
+            showStatus(`思维导图渲染完成，共 ${nodes.length} 个节点`, 'success');
+        }
+
+        // 检测并高亮重叠
+        function detectAndHighlightOverlaps() {
+            if (nodes.length === 0) {
+                showStatus('请先渲染思维导图', 'error');
+                return;
+            }
+
+            addDebugLog('🔍 开始检测节点重叠...', 'info');
+            overlaps = [];
+
+            const overlapGroup = d3.select("#overlap-group");
+            overlapGroup.selectAll("*").remove();
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const node1 = nodes[i];
+                    const node2 = nodes[j];
+
+                    // 跳过直接父子关系
+                    const isParentChild = checkParentChildRelationship(node1, node2);
+                    if (isParentChild) {
+                        continue;
+                    }
+
+                    // 计算重叠区域
+                    const overlapLeft = Math.max(node1.x, node2.x);
+                    const overlapTop = Math.max(node1.y, node2.y);
+                    const overlapRight = Math.min(node1.x + node1.width, node2.x + node2.width);
+                    const overlapBottom = Math.min(node1.y + node1.height, node2.y + node2.height);
+
+                    const overlapWidth = Math.max(0, overlapRight - overlapLeft);
+                    const overlapHeight = Math.max(0, overlapBottom - overlapTop);
+                    const overlapArea = overlapWidth * overlapHeight;
+
+                    if (overlapArea > 0) {
+                        const overlapInfo = {
+                            node1,
+                            node2,
+                            overlapArea,
+                            overlapWidth,
+                            overlapHeight,
+                            x: overlapLeft,
+                            y: overlapTop
+                        };
+
+                        overlaps.push(overlapInfo);
+
+                        addDebugLog(`❌ 重叠: ${node1.name} (L${node1.depth}) ↔ ${node2.name} (L${node2.depth}) - 面积: ${overlapArea.toFixed(1)}px² (${overlapWidth.toFixed(1)} × ${overlapHeight.toFixed(1)})`, 'error');
+
+                        // 高亮重叠区域
+                        overlapGroup.append("rect")
+                            .attr("class", "overlap-highlight")
+                            .attr("x", overlapLeft)
+                            .attr("y", overlapTop)
+                            .attr("width", overlapWidth)
+                            .attr("height", overlapHeight);
+                    }
+                }
+            }
+
+            if (overlaps.length === 0) {
+                addDebugLog('✅ 未发现节点重叠！', 'success');
+                showStatus('未发现节点重叠', 'success');
+            } else {
+                addDebugLog(`🚨 总共发现 ${overlaps.length} 个重叠问题！`, 'error');
+                showStatus(`发现 ${overlaps.length} 个重叠问题`, 'error');
+            }
+        }
+
+        // 检查父子关系
+        function checkParentChildRelationship(node1, node2) {
+            // 简化的父子关系检查
+            for (const link of links) {
+                if ((link.source.name === node1.name && link.target.name === node2.name) ||
+                    (link.source.name === node2.name && link.target.name === node1.name)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 清空调试信息
+        function clearDebugInfo() {
+            const debugLog = document.getElementById('debug-log');
+            debugLog.innerHTML = '<li class="info">调试信息已清空</li>';
+        }
+
+        // 导出调试数据
+        function exportDebugData() {
+            const debugData = {
+                timestamp: new Date().toISOString(),
+                layoutConfig: layoutConfig,
+                nodes: nodes,
+                links: links,
+                overlaps: overlaps,
+                statistics: {
+                    totalNodes: nodes.length,
+                    totalLinks: links.length,
+                    totalOverlaps: overlaps.length,
+                    nodeDepths: {}
+                }
+            };
+
+            // 统计节点深度
+            nodes.forEach(node => {
+                debugData.statistics.nodeDepths[node.depth] = (debugData.statistics.nodeDepths[node.depth] || 0) + 1;
+            });
+
+            const dataStr = JSON.stringify(debugData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+            const exportLink = document.createElement('a');
+            exportLink.setAttribute('href', dataUri);
+            exportLink.setAttribute('download', `mindmap-debug-${Date.now()}.json`);
+            document.body.appendChild(exportLink);
+            exportLink.click();
+            document.body.removeChild(exportLink);
+
+            addDebugLog('📊 调试数据已导出', 'success');
+        }
+
+        // 页面加载时自动渲染
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                renderMindMap();
+                setTimeout(() => {
+                    detectAndHighlightOverlaps();
+                }, 500);
+            }, 100);
+        });
+    </script>
+</body>
+</html>
