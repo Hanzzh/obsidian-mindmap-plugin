@@ -88,7 +88,7 @@ export const en: MindMapMessages = {
 		title: 'Settings for openMindMap Plugin',
 
 		// Device settings
-		deviceSection: 'Device Settings',
+		deviceSection: 'Device settings',
 		deviceType: 'Device type',
 		deviceTypeDesc: 'Choose how mind maps should be rendered. Auto-detects based on your device.',
 		deviceAuto: 'Auto-detect',
@@ -96,43 +96,43 @@ export const en: MindMapMessages = {
 		deviceMobile: 'Mobile mode',
 
 		// Language settings
-		languageSection: 'Language Settings',
+		languageSection: 'Language settings',
 		language: 'Language',
 		languageDesc: 'Choose your preferred language for the plugin interface.',
 		languageEnglish: 'English',
 		languageChinese: '中文',
 
 		// AI configuration
-		aiSection: 'AI Configuration (OpenAI-compatible API)',
+		aiSection: 'AI configuration (OpenAI-compatible API)',
 		aiSectionDesc: 'Configure your AI API to enable intelligent features like automatic node suggestions.',
 		aiSecurity: '🔒 Security: Your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.',
 
-		aiBaseUrl: 'OpenAI API Base URL',
+		aiBaseUrl: 'OpenAI API base URL',
 		aiBaseUrlDesc: 'The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)',
 		aiBaseUrlPlaceholder: 'https://api.openai.com/v1',
 
-		aiApiKey: 'OpenAI API Key',
+		aiApiKey: 'OpenAI API key',
 		aiApiKeyDesc: 'Your OpenAI API key (starts with sk-...)',
 		aiApiKeyPlaceholder: 'sk-...',
 
-		aiModel: 'Model Name',
+		aiModel: 'Model name',
 		aiModelDesc: 'The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)',
 		aiModelPlaceholder: 'gpt-3.5-turbo',
 
-		aiTestConnection: 'Test Connection',
+		aiTestConnection: 'Test connection',
 		aiTestConnectionDesc: 'Test your API configuration to ensure it works correctly',
-		aiTestButton: 'Test Connection',
+		aiTestButton: 'Test connection',
 		aiTesting: 'Testing...',
 
 		// AI prompt configuration
-		aiPromptSection: 'AI Prompt Configuration',
+		aiPromptSection: 'AI prompt configuration',
 		aiPromptSectionDesc: 'Customize how the AI generates suggestions by editing the system message and prompt template.',
 
-		aiSystemMessage: 'AI System Message',
+		aiSystemMessage: 'AI system message',
 		aiSystemMessageDesc: 'Define the AI assistant role and behavior. This sets the context for all AI interactions.',
 		aiSystemMessagePlaceholder: 'You are a helpful mind map assistant...',
 
-		aiPromptTemplate: 'AI Prompt Template',
+		aiPromptTemplate: 'AI prompt template',
 		aiPromptTemplateDesc: 'Customize the prompt template for node suggestions. Available variables: {nodeText}, {level}, {parentContext}, {siblingsContext}, {existingChildren}, {centralTopic}',
 		aiPromptTemplatePlaceholder: 'Please suggest 3-5 child nodes...',
 
@@ -144,9 +144,9 @@ export const en: MindMapMessages = {
 		aiPromptVariableChildren: '{existingChildren}: Existing child nodes of the current node',
 		aiPromptVariableCentral: '{centralTopic}: The root/central topic of the mind map',
 
-		aiResetPrompts: 'Reset Prompts',
+		aiResetPrompts: 'Reset prompts',
 		aiResetPromptsDesc: 'Reset prompt templates to default values',
-		aiResetButton: 'Reset to Defaults',
+		aiResetButton: 'Reset to defaults',
 	},
 
 	// ==================== UI Elements (界面元素) ====================

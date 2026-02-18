@@ -7515,42 +7515,42 @@ var en = {
   settings: {
     title: "Settings for openMindMap Plugin",
     // Device settings
-    deviceSection: "Device Settings",
+    deviceSection: "Device settings",
     deviceType: "Device type",
     deviceTypeDesc: "Choose how mind maps should be rendered. Auto-detects based on your device.",
     deviceAuto: "Auto-detect",
     deviceDesktop: "Desktop mode",
     deviceMobile: "Mobile mode",
     // Language settings
-    languageSection: "Language Settings",
+    languageSection: "Language settings",
     language: "Language",
     languageDesc: "Choose your preferred language for the plugin interface.",
     languageEnglish: "English",
     languageChinese: "\u4E2D\u6587",
     // AI configuration
-    aiSection: "AI Configuration (OpenAI-compatible API)",
+    aiSection: "AI configuration (OpenAI-compatible API)",
     aiSectionDesc: "Configure your AI API to enable intelligent features like automatic node suggestions.",
     aiSecurity: "\u{1F512} Security: Your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.",
-    aiBaseUrl: "OpenAI API Base URL",
+    aiBaseUrl: "OpenAI API base URL",
     aiBaseUrlDesc: "The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)",
     aiBaseUrlPlaceholder: "https://api.openai.com/v1",
-    aiApiKey: "OpenAI API Key",
+    aiApiKey: "OpenAI API key",
     aiApiKeyDesc: "Your OpenAI API key (starts with sk-...)",
     aiApiKeyPlaceholder: "sk-...",
-    aiModel: "Model Name",
+    aiModel: "Model name",
     aiModelDesc: "The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)",
     aiModelPlaceholder: "gpt-3.5-turbo",
-    aiTestConnection: "Test Connection",
+    aiTestConnection: "Test connection",
     aiTestConnectionDesc: "Test your API configuration to ensure it works correctly",
-    aiTestButton: "Test Connection",
+    aiTestButton: "Test connection",
     aiTesting: "Testing...",
     // AI prompt configuration
-    aiPromptSection: "AI Prompt Configuration",
+    aiPromptSection: "AI prompt configuration",
     aiPromptSectionDesc: "Customize how the AI generates suggestions by editing the system message and prompt template.",
-    aiSystemMessage: "AI System Message",
+    aiSystemMessage: "AI system message",
     aiSystemMessageDesc: "Define the AI assistant role and behavior. This sets the context for all AI interactions.",
     aiSystemMessagePlaceholder: "You are a helpful mind map assistant...",
-    aiPromptTemplate: "AI Prompt Template",
+    aiPromptTemplate: "AI prompt template",
     aiPromptTemplateDesc: "Customize the prompt template for node suggestions. Available variables: {nodeText}, {level}, {parentContext}, {siblingsContext}, {existingChildren}, {centralTopic}",
     aiPromptTemplatePlaceholder: "Please suggest 3-5 child nodes...",
     aiPromptVariables: "Available variables:",
@@ -7560,9 +7560,9 @@ var en = {
     aiPromptVariableSiblings: "{siblingsContext}: Context from sibling nodes",
     aiPromptVariableChildren: "{existingChildren}: Existing child nodes of the current node",
     aiPromptVariableCentral: "{centralTopic}: The root/central topic of the mind map",
-    aiResetPrompts: "Reset Prompts",
+    aiResetPrompts: "Reset prompts",
     aiResetPromptsDesc: "Reset prompt templates to default values",
-    aiResetButton: "Reset to Defaults"
+    aiResetButton: "Reset to defaults"
   },
   // ==================== UI Elements (界面元素) ====================
   ui: {
@@ -8993,7 +8993,7 @@ var MindMapPlugin = class extends import_obsidian6.Plugin {
     ribbonIconEl.addClass("mind-map-ribbon-class");
     this.addCommand({
       id: "open-view",
-      name: "Open mind map view",
+      name: "Open Mindmap view",
       callback: () => {
         void this.activateView();
       }
@@ -9496,13 +9496,13 @@ var MindMapSettingTab = class extends import_obsidian6.PluginSettingTab {
     }
     containerEl.empty();
     containerEl.createEl("h2", { text: "Settings for openMindMap Plugin" });
-    containerEl.createEl("h3", { text: "Device Settings" });
+    containerEl.createEl("h3", { text: "Device settings" });
     new import_obsidian6.Setting(containerEl).setName("Device type").setDesc("Choose how mind maps should be rendered. Auto-detects based on your device.").addDropdown((dropdown) => dropdown.addOption("auto", "Auto-detect").addOption("desktop", "Desktop mode").addOption("mobile", "Mobile mode").setValue(this.plugin.settings.deviceType).onChange(async (value) => {
       this.plugin.settings.deviceType = value;
       await this.plugin.saveSettings();
       new import_obsidian6.Notice(this.plugin.messages.notices.deviceTypeChanged);
     }));
-    containerEl.createEl("h3", { text: "Language Settings" });
+    containerEl.createEl("h3", { text: "Language settings" });
     new import_obsidian6.Setting(containerEl).setName("Language").setDesc("Choose your preferred language for the plugin interface.").addDropdown((dropdown) => dropdown.addOption("en", "English").addOption("zh", "\u4E2D\u6587").setValue(this.plugin.settings.language || "en").onChange(async (value) => {
       this.plugin.settings.language = value;
       await this.plugin.saveSettings();
@@ -9549,7 +9549,7 @@ var MindMapSettingTab = class extends import_obsidian6.PluginSettingTab {
         });
       });
     });
-    new import_obsidian6.Setting(containerEl).setName("Model Name").setDesc("The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)").addText((text) => text.setPlaceholder("gpt-3.5-turbo").setValue(this.plugin.settings.openaiModel).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Model name").setDesc("The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)").addText((text) => text.setPlaceholder("gpt-3.5-turbo").setValue(this.plugin.settings.openaiModel).onChange(async (value) => {
       this.plugin.settings.openaiModel = value;
       await this.plugin.saveSettings();
       this.plugin.aiClient.updateConfig({
@@ -9560,11 +9560,11 @@ var MindMapSettingTab = class extends import_obsidian6.PluginSettingTab {
     }));
     const testButtonContainer = containerEl.createDiv({ cls: "setting-item" });
     const testButtonDesc = testButtonContainer.createDiv({ cls: "setting-item-info" });
-    testButtonDesc.createDiv({ cls: "setting-item-name", text: "Test Connection" });
+    testButtonDesc.createDiv({ cls: "setting-item-name", text: "Test connection" });
     testButtonDesc.createDiv({ cls: "setting-item-description", text: "Test your API configuration to ensure it works correctly" });
     const testButtonControl = testButtonContainer.createDiv({ cls: "setting-item-control" });
     this.testButton = testButtonControl.createEl("button", {
-      text: "Test Connection",
+      text: "Test connection",
       cls: "mod-cta"
     });
     let resultEl = null;
@@ -9601,7 +9601,7 @@ var MindMapSettingTab = class extends import_obsidian6.PluginSettingTab {
         new import_obsidian6.Notice(this.plugin.messages.notices.connectionTestFailed);
       } finally {
         if (this.testButton) {
-          this.testButton.textContent = "Test Connection";
+          this.testButton.textContent = "Test connection";
           this.testButton.disabled = false;
         }
       }

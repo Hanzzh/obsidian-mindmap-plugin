@@ -102,7 +102,7 @@ export default class MindMapPlugin extends Plugin {
 		// Command: Open mind map view
 		this.addCommand({
 			id: 'open-view',
-			name: 'Open mind map view',
+			name: 'Open Mindmap view',
 			callback: () => {
 				void this.activateView();
 			}
@@ -867,7 +867,7 @@ class MindMapSettingTab extends PluginSettingTab {
 		// ====================
 		// Device Type Settings
 		// ====================
-		containerEl.createEl('h3', {text: 'Device Settings'});
+		containerEl.createEl('h3', {text: 'Device settings'});
 
 		new Setting(containerEl)
 			.setName('Device type')
@@ -887,7 +887,7 @@ class MindMapSettingTab extends PluginSettingTab {
 		// ====================
 		// Language Settings
 		// ====================
-		containerEl.createEl('h3', {text: 'Language Settings'});
+		containerEl.createEl('h3', {text: 'Language settings'});
 
 		new Setting(containerEl)
 			.setName('Language')
@@ -973,7 +973,7 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// Model Name
 		new Setting(containerEl)
-			.setName('Model Name')
+			.setName('Model name')
 			.setDesc('The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)')
 			.addText(text => text
 				.setPlaceholder('gpt-3.5-turbo')
@@ -992,14 +992,14 @@ class MindMapSettingTab extends PluginSettingTab {
 		// Test Connection Button
 		const testButtonContainer = containerEl.createDiv({ cls: 'setting-item' });
 		const testButtonDesc = testButtonContainer.createDiv({ cls: 'setting-item-info' });
-		testButtonDesc.createDiv({ cls: 'setting-item-name', text: 'Test Connection' });
+		testButtonDesc.createDiv({ cls: 'setting-item-name', text: 'Test connection' });
 		testButtonDesc.createDiv({ cls: 'setting-item-description', text: 'Test your API configuration to ensure it works correctly' });
 
 		const testButtonControl = testButtonContainer.createDiv({ cls: 'setting-item-control' });
 
 		// Store reference to button for cleanup
 		this.testButton = testButtonControl.createEl('button', {
-			text: 'Test Connection',
+			text: 'Test connection',
 			cls: 'mod-cta'
 		});
 
@@ -1056,7 +1056,7 @@ class MindMapSettingTab extends PluginSettingTab {
 			} finally {
 				// Restore button state
 				if (this.testButton) {
-					this.testButton.textContent = 'Test Connection';
+					this.testButton.textContent = 'Test connection';
 					this.testButton.disabled = false;
 				}
 			}
