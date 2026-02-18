@@ -37,7 +37,7 @@ export class D3FileHandler implements MindMapFileHandler {
     async loadFileContent(file: TFile): Promise<string> {
         try {
             return await this.app.vault.read(file);
-        } catch (error) {
+        } catch {
             throw new Error(`Failed to load file: ${file.path}`);
         }
     }
@@ -73,7 +73,7 @@ export class D3FileHandler implements MindMapFileHandler {
             } else {
                 throw new Error(`File not found: ${filePath}`);
             }
-        } catch (error) {
+        } catch {
             throw new Error(`Failed to save file: ${filePath}`);
         }
     }
@@ -88,7 +88,7 @@ export class D3FileHandler implements MindMapFileHandler {
 * ${title}
 `;
             return await this.app.vault.create(filePath, content);
-        } catch (error) {
+        } catch {
             throw new Error(`Failed to create file: ${filePath}`);
         }
     }

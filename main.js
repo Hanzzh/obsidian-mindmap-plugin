@@ -3204,7 +3204,7 @@ var UndoManager = class {
     }
     this.undoStack.push(snapshot);
     if (this.undoStack.length > this.MAX_STACK_SIZE) {
-      const removed = this.undoStack.shift();
+      this.undoStack.shift();
     }
     this.redoStack = [];
   }
@@ -4091,7 +4091,6 @@ var LayoutCalculator = class {
    */
   calculateLeftAlignedHorizontalPositions(root2, nodeDimensionsCallback) {
     const nodeGroups = this.groupNodesByParent(root2);
-    const rootDimensions = nodeDimensionsCallback(root2.depth, root2.data.text);
     root2.y = 50;
     this.processNodeGroupsByLevel(nodeGroups, nodeDimensionsCallback);
   }
@@ -4122,7 +4121,7 @@ var LayoutCalculator = class {
    * @param nodeDimensionsCallback 获取节点尺寸的回调函数
    */
   processNodeGroupsByLevel(nodeGroups, nodeDimensionsCallback) {
-    for (const [parentText, childNodes] of nodeGroups) {
+    for (const childNodes of nodeGroups.values()) {
       if (childNodes.length === 0) continue;
       const firstChild = childNodes[0];
       if (!firstChild.parent) {
@@ -4618,7 +4617,6 @@ var LinkRenderer = class {
       const targetX = connectionPoints.targetX;
       const targetY = connectionPoints.targetY;
       const deltaX = targetX - sourceX;
-      const deltaY = targetY - sourceY;
       const control1X = sourceX + deltaX * 0.3;
       const control1Y = sourceY;
       const control2X = targetX - deltaX * 0.3;
@@ -4691,10 +4689,6 @@ var LinkRenderer = class {
     const sourceDimensions = this.textMeasurer.getNodeDimensions(
       link.source.depth,
       link.source.data.text
-    );
-    const targetDimensions = this.textMeasurer.getNodeDimensions(
-      link.target.depth,
-      link.target.data.text
     );
     const sourcePadding = this.getNodePadding(link.source.depth);
     const targetPadding = this.getNodePadding(link.target.depth);
@@ -5916,7 +5910,7 @@ var NodeEditor = class {
             selection2.removeAllRanges();
             selection2.addRange(range);
           }
-        } catch (focusError) {
+        } catch (e) {
           this.showValidationError(this.messages.errors.focusSetFailed);
           this.exitEditMode();
         }
@@ -5924,7 +5918,7 @@ var NodeEditor = class {
       setTimeout(() => {
         this.showEditingHint();
       }, 100);
-    } catch (error) {
+    } catch (e) {
       this.showValidationError(this.messages.errors.enterEditModeFailed);
       this.exitEditMode();
     }
@@ -5934,7 +5928,7 @@ var NodeEditor = class {
    */
   exitEditMode() {
     if (!this.editingState.isEditing) return;
-    const { editElement, currentNode } = this.editingState;
+    const { editElement } = this.editingState;
     this.setCanvasInteraction(true);
     if (editElement) {
       try {
@@ -5946,7 +5940,7 @@ var NodeEditor = class {
         }
         const nodeElement = select_default2(editElement.closest("g"));
         nodeElement.classed("node-editing", false);
-      } catch (error) {
+      } catch (e) {
       }
     }
     this.hideEditingHint();
@@ -5988,7 +5982,7 @@ var NodeEditor = class {
       (_c = (_b = this.callbacks).onBeforeTextChange) == null ? void 0 : _c.call(_b, currentNode);
       currentNode.data.text = newText;
       (_e = (_d = this.callbacks).onTextChanged) == null ? void 0 : _e.call(_d, currentNode, newText);
-    } catch (error) {
+    } catch (e) {
       this.showValidationError(this.messages.errors.saveFailed);
       editElement.textContent = this.editingState.originalText;
     }
@@ -6096,7 +6090,7 @@ var NodeEditor = class {
     if (this.editingState.isEditing) {
       try {
         this.exitEditMode();
-      } catch (recoveryError) {
+      } catch (e) {
       }
     }
   }
@@ -6133,7 +6127,7 @@ var ClipboardManager = class {
       } else {
         return this.fallbackCopy(markdown);
       }
-    } catch (error) {
+    } catch (e) {
       this.showErrorNotice(this.messages.notices.copyFailed);
       return false;
     }
@@ -6227,7 +6221,7 @@ var ClipboardManager = class {
         this.showErrorNotice(this.messages.notices.copyFailed);
         return false;
       }
-    } catch (err) {
+    } catch (e) {
       this.showErrorNotice(this.messages.notices.copyFailed);
       return false;
     } finally {
@@ -6773,7 +6767,6 @@ var RendererCoordinator = class {
       return;
     }
     requestAnimationFrame(() => {
-      const containerWidth = container.clientWidth || 1600;
       const containerHeight = container.clientHeight || 1e3;
       const initialTransform = identity2.translate(20, (containerHeight - 100) / 2).scale(1);
       svg.call(zoom.transform, initialTransform);
@@ -7388,7 +7381,7 @@ var D3FileHandler = class {
   async loadFileContent(file) {
     try {
       return await this.app.vault.read(file);
-    } catch (error) {
+    } catch (e) {
       throw new Error(`Failed to load file: ${file.path}`);
     }
   }
@@ -7419,7 +7412,7 @@ var D3FileHandler = class {
       } else {
         throw new Error(`File not found: ${filePath}`);
       }
-    } catch (error) {
+    } catch (e) {
       throw new Error(`Failed to save file: ${filePath}`);
     }
   }
@@ -7433,7 +7426,7 @@ var D3FileHandler = class {
 * ${title}
 `;
       return await this.app.vault.create(filePath, content);
-    } catch (error) {
+    } catch (e) {
       throw new Error(`Failed to create file: ${filePath}`);
     }
   }
@@ -8618,8 +8611,8 @@ var AIClient = class {
           message: `\u274C Error: ${errorMessage}`
         };
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    } catch (e) {
+      const errorMessage = "Network error. Please check your internet connection and API URL.";
       return {
         success: false,
         message: `\u274C Network error: ${errorMessage}. Please check your internet connection and API URL.`
@@ -8762,7 +8755,7 @@ var AIClient = class {
       if (url.protocol === "http:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
         throw new Error("HTTP is not secure. Please use HTTPS.");
       }
-    } catch (urlError) {
+    } catch (e) {
       throw new Error(`Invalid API base URL format: ${this.config.apiBaseUrl}`);
     }
     if (!this.config.model || this.config.model.trim() === "") {
@@ -8896,7 +8889,7 @@ var EncryptionUtil = class {
       combined.set(iv);
       combined.set(new Uint8Array(encryptedData), iv.length);
       return this.arrayBufferToBase64(combined);
-    } catch (error) {
+    } catch (e) {
       throw new Error("Failed to encrypt data");
     }
   }
@@ -9095,14 +9088,14 @@ var MindMapPlugin = class extends import_obsidian7.Plugin {
       if (this.settings.openaiApiKeyEncrypted) {
         try {
           this.settings.openaiApiKey = await EncryptionUtil.decrypt(this.settings.openaiApiKey);
-        } catch (error) {
+        } catch (e) {
           this.settings.openaiApiKeyEncrypted = false;
         }
       } else if (EncryptionUtil.isEncrypted(this.settings.openaiApiKey)) {
         try {
           this.settings.openaiApiKey = await EncryptionUtil.decrypt(this.settings.openaiApiKey);
           this.settings.openaiApiKeyEncrypted = true;
-        } catch (error) {
+        } catch (e) {
         }
       }
     }
@@ -9119,13 +9112,13 @@ var MindMapPlugin = class extends import_obsidian7.Plugin {
       try {
         settingsToSave.openaiApiKey = await EncryptionUtil.encrypt(settingsToSave.openaiApiKey);
         settingsToSave.openaiApiKeyEncrypted = true;
-      } catch (error) {
+      } catch (e) {
         settingsToSave.openaiApiKeyEncrypted = false;
       }
     } else if (settingsToSave.openaiApiKey && settingsToSave.openaiApiKeyEncrypted) {
       try {
         settingsToSave.openaiApiKey = await EncryptionUtil.encrypt(this.settings.openaiApiKey);
-      } catch (error) {
+      } catch (e) {
       }
     }
     await this.saveData(settingsToSave);
@@ -9242,7 +9235,7 @@ var MindMapView = class _MindMapView extends import_obsidian7.ItemView {
           filePath = leafState.state.file;
           this.filePath = filePath;
         }
-      } catch (error) {
+      } catch (e) {
       }
       if (!filePath) {
         const activeFile = this.app.workspace.getActiveFile();
@@ -9291,7 +9284,7 @@ var MindMapView = class _MindMapView extends import_obsidian7.ItemView {
         if ((_a = leafState.state) == null ? void 0 : _a.file) {
           this.filePath = leafState.state.file;
         }
-      } catch (error) {
+      } catch (e) {
       }
     }
     if (this.needsContentLoading && this.filePath) {
@@ -9335,7 +9328,7 @@ var MindMapView = class _MindMapView extends import_obsidian7.ItemView {
           if (content.trim().startsWith("#mindmap")) {
             filePath = activeFile.path;
           }
-        } catch (error) {
+        } catch (e) {
         }
       }
     }
@@ -9431,7 +9424,7 @@ var MindMapView = class _MindMapView extends import_obsidian7.ItemView {
         container.empty();
         this.renderer.render(container, this.mindMapData);
       });
-    } catch (error) {
+    } catch (e) {
     }
   }
   // ========== Undo/Redo 方法 ==========

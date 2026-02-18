@@ -33,7 +33,7 @@ export class UndoManager {
 
         // Limit stack size to MAX_STACK_SIZE (FIFO)
         if (this.undoStack.length > this.MAX_STACK_SIZE) {
-            const removed = this.undoStack.shift();
+            this.undoStack.shift();
         }
 
 

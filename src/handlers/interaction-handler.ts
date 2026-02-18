@@ -9,7 +9,6 @@ import { Notice } from 'obsidian';
 import { MindMapNode, MindMapInteractionHandler, EditingState } from '../interfaces/mindmap-interfaces';
 import { MindMapConfig } from '../config/types';
 import { validateNodeText } from '../utils/mindmap-utils';
-import { STYLE_CONSTANTS } from '../constants/mindmap-constants';
 import { MindMapMessages } from '../i18n';
 
 export interface InteractionCallbacks {
@@ -114,7 +113,7 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
             if (editElement) {
                 this.enableNodeEditing(node, editElement);
             }
-        } catch (error) {
+        } catch {
             // Ignore errors during double-click handling
         }
     }
@@ -193,7 +192,7 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
     exitEditMode(): void {
         if (!this.editingState.isEditing) return;
 
-        const { editElement, currentNode } = this.editingState;
+        const { editElement } = this.editingState;
 
         if (editElement) {
             try {
@@ -204,7 +203,7 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
                 // Note: Event listeners are not explicitly removed
                 // This is safe because editingState.isEditing will be false,
                 // so the handlers won't execute any editing logic
-            } catch (error) {
+            } catch {
                 // Ignore errors when cleaning up edit element
             }
         }
@@ -290,7 +289,7 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
             // Show success message
             this.showEditSuccess("Node text updated successfully");
 
-        } catch (error) {
+        } catch {
             this.showValidationError(this.messages.errors.saveFailed || "Failed to save node text");
             // Restore original text
             editElement.textContent = this.editingState.originalText;

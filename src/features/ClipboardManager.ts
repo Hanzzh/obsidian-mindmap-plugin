@@ -91,7 +91,7 @@ export class ClipboardManager {
 				// 降级方案：使用传统方法
 				return this.fallbackCopy(markdown);
 			}
-		} catch (error) {
+		} catch {
 			this.showErrorNotice(this.messages.notices.copyFailed);
 			return false;
 		}
@@ -214,7 +214,7 @@ export class ClipboardManager {
 				this.showErrorNotice(this.messages.notices.copyFailed);
 				return false;
 			}
-		} catch (err) {
+		} catch {
 			this.showErrorNotice(this.messages.notices.copyFailed);
 			return false;
 		} finally {

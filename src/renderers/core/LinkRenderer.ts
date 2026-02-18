@@ -100,7 +100,6 @@ export class LinkRenderer {
 
 			// 计算三次贝塞尔曲线的控制点
 			const deltaX = targetX - sourceX;
-			const deltaY = targetY - sourceY;
 
 			// 第一个控制点：从源节点出发，沿X轴正方向
 			const control1X = sourceX + deltaX * 0.3;
@@ -230,10 +229,6 @@ export class LinkRenderer {
 		const sourceDimensions = this.textMeasurer.getNodeDimensions(
 			link.source.depth,
 			link.source.data.text
-		);
-		const targetDimensions = this.textMeasurer.getNodeDimensions(
-			link.target.depth,
-			link.target.data.text
 		);
 
 		// 获取对应的padding值

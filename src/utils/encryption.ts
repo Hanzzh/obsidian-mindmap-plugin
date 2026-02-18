@@ -103,7 +103,7 @@ export class EncryptionUtil {
 
 			// Return as base64
 			return this.arrayBufferToBase64(combined);
-		} catch (error) {
+		} catch {
 			throw new Error('Failed to encrypt data');
 		}
 	}

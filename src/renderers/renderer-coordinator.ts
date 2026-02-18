@@ -20,7 +20,6 @@
  */
 
 import * as d3 from 'd3';
-import { Notice } from 'obsidian';
 import { MindMapData, MindMapRenderer, EditingState, MindMapNode } from '../interfaces/mindmap-interfaces';
 import { MindMapService } from '../services/mindmap-service';
 import { MindMapConfig } from '../config/types';
@@ -463,7 +462,6 @@ export class RendererCoordinator implements MindMapRenderer {
 
 		// 简化版初始位置（可以后续优化）
 		requestAnimationFrame(() => {
-			const containerWidth = container.clientWidth || 1600;
 			const containerHeight = container.clientHeight || 1000;
 
 			const initialTransform = d3.zoomIdentity

@@ -58,7 +58,6 @@ export class MobileInteraction extends DesktopInteraction {
      */
     handleNodeDoubleClick(node: d3.HierarchyNode<MindMapNode>): void {
         const currentTime = Date.now();
-        const timeSinceLastTouch = currentTime - this.lastTouchTime;
 
         // Update last touch time for mobile tap detection
         if (this.isTouchEvent) {

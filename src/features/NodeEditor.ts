@@ -134,7 +134,7 @@ export class NodeEditor {
 						selection.removeAllRanges();
 						selection.addRange(range);
 					}
-				} catch (focusError) {
+				} catch {
 					this.showValidationError(this.messages.errors.focusSetFailed);
 					this.exitEditMode();
 				}
@@ -145,7 +145,7 @@ export class NodeEditor {
 				this.showEditingHint();
 			}, 100);
 
-		} catch (error) {
+		} catch {
 			this.showValidationError(this.messages.errors.enterEditModeFailed);
 			this.exitEditMode();
 		}
@@ -157,7 +157,7 @@ export class NodeEditor {
 	exitEditMode(): void {
 		if (!this.editingState.isEditing) return;
 
-		const { editElement, currentNode } = this.editingState;
+		const { editElement } = this.editingState;
 
 		// 恢复画布交互
 		this.setCanvasInteraction(true);
@@ -177,7 +177,7 @@ export class NodeEditor {
 				// 移除节点编辑状态
 				const nodeElement = d3.select(editElement.closest("g"));
 				nodeElement.classed("node-editing", false);
-			} catch (error) {
+			} catch {
 				// Ignore errors when cleaning up DOM elements
 			}
 		}
@@ -247,7 +247,7 @@ export class NodeEditor {
 			// 触发文件保存回调
 			this.callbacks.onTextChanged?.(currentNode, newText);
 
-		} catch (error) {
+		} catch {
 			this.showValidationError(this.messages.errors.saveFailed);
 			// 恢复原始文本
 			editElement.textContent = this.editingState.originalText;
@@ -384,7 +384,7 @@ export class NodeEditor {
 		if (this.editingState.isEditing) {
 			try {
 				this.exitEditMode();
-			} catch (recoveryError) {
+			} catch {
 				// Ignore errors during recovery attempt
 			}
 		}

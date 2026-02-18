@@ -1,5 +1,3 @@
-import * as d3 from 'd3';
-import { MindMapNode } from '../interfaces/mindmap-interfaces';
 import {
 	KeyboardHandlers,
 	KeyboardManagerConfig,

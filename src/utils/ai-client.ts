@@ -104,7 +104,7 @@ export class AIClient {
 					if (errorData.error?.message) {
 						errorMessage = errorData.error.message;
 					}
-				} catch (e) {
+				} catch {
 					// Ignore JSON parse errors when extracting error details
 				}
 
@@ -114,9 +114,9 @@ export class AIClient {
 					message: `❌ Error: ${errorMessage}`
 				};
 			}
-		} catch (error) {
+		} catch {
 			// Network error or other exception
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage = 'Network error. Please check your internet connection and API URL.';
 
 			return {
 				success: false,
@@ -168,7 +168,7 @@ export class AIClient {
 				if (errorData.error?.message) {
 					errorMessage = errorData.error.message;
 				}
-			} catch (e) {
+			} catch {
 				// Ignore JSON parse errors when extracting error details
 			}
 			throw new Error(errorMessage);
@@ -327,7 +327,7 @@ export class AIClient {
 			if (url.protocol === 'http:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
 				throw new Error('HTTP is not secure. Please use HTTPS.');
 			}
-		} catch (urlError) {
+		} catch {
 			throw new Error(`Invalid API base URL format: ${this.config.apiBaseUrl}`);
 		}
 

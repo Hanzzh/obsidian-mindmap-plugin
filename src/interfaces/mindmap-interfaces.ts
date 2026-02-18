@@ -4,7 +4,7 @@
  * Centralized interface definitions for the mind map plugin
  */
 
-import { App, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
 import * as d3 from 'd3';
 
 // ============================================================================

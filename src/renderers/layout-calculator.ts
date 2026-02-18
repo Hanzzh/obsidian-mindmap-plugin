@@ -533,7 +533,6 @@ export class LayoutCalculator {
         const nodeGroups = this.groupNodesByParent(root);
 
         // 设置根节点位置
-        const rootDimensions = nodeDimensionsCallback(root.depth, root.data.text);
         root.y = 50; // 根节点固定左边距
 
         // 按层级处理每个父节点的子节点
@@ -575,7 +574,7 @@ export class LayoutCalculator {
         nodeDimensionsCallback: (depth: number, text: string) => NodeDimensions
     ): void {
         // 为每个父节点组统一设置子节点位置
-        for (const [parentText, childNodes] of nodeGroups) {
+        for (const childNodes of nodeGroups.values()) {
             if (childNodes.length === 0) continue;
 
             // 获取第一个子节点来获取父节点引用

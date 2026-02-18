@@ -2,7 +2,7 @@ import { App, MarkdownView, ItemView, Plugin, PluginSettingTab, Setting, Workspa
 import { RendererManager } from './renderers/renderer-manager';
 import { RendererCoordinator } from './renderers/renderer-coordinator';
 import { MindMapService } from './services/mindmap-service';
-import { MindMapData, MindMapNode, EditingState, MindMapRenderer, NodeDimensions } from './interfaces/mindmap-interfaces';
+import { MindMapData, MindMapNode, MindMapRenderer } from './interfaces/mindmap-interfaces';
 import { ConfigManager } from './config/config-manager';
 import { MindMapConfig } from './config/types';
 import { AIClient, AIConfiguration, TestConnectionResult } from './utils/ai-client';
@@ -219,7 +219,7 @@ export default class MindMapPlugin extends Plugin {
 				// Decrypt the API key
 				try {
 					this.settings.openaiApiKey = await EncryptionUtil.decrypt(this.settings.openaiApiKey);
-				} catch (error) {
+				} catch {
 					// If decryption fails, keep as is (might be unencrypted)
 					this.settings.openaiApiKeyEncrypted = false;
 				}
@@ -228,7 +228,7 @@ export default class MindMapPlugin extends Plugin {
 				try {
 					this.settings.openaiApiKey = await EncryptionUtil.decrypt(this.settings.openaiApiKey);
 					this.settings.openaiApiKeyEncrypted = true;
-				} catch (error) {
+				} catch {
 					// Keep as is if decryption fails
 				}
 			}
@@ -252,7 +252,7 @@ export default class MindMapPlugin extends Plugin {
 			try {
 				settingsToSave.openaiApiKey = await EncryptionUtil.encrypt(settingsToSave.openaiApiKey);
 				settingsToSave.openaiApiKeyEncrypted = true;
-			} catch (error) {
+			} catch {
 				// Save unencrypted if encryption fails
 				settingsToSave.openaiApiKeyEncrypted = false;
 			}
@@ -260,7 +260,7 @@ export default class MindMapPlugin extends Plugin {
 			// Already encrypted, re-encrypt for safety
 			try {
 				settingsToSave.openaiApiKey = await EncryptionUtil.encrypt(this.settings.openaiApiKey);
-			} catch (error) {
+			} catch {
 				// If encryption fails, keep the original key
 			}
 		}
@@ -411,18 +411,6 @@ interface CoreLayoutNode {
     height: number;
 }
 
-interface CoreOverlap {
-    node1: CoreLayoutNode;
-    node2: CoreLayoutNode;
-    overlapArea: number;
-    overlapWidth: number;
-    overlapHeight: number;
-}
-
-interface CoreTreeLayoutResult {
-    nodes: CoreLayoutNode[];
-}
-
 class MindMapView extends ItemView {
 	filePath: string | null = null;
 	private needsContentLoading = false;
@@ -465,7 +453,7 @@ class MindMapView extends ItemView {
 					// 缓存到实例变量
 					this.filePath = filePath;
 				}
-			} catch (error) {
+			} catch {
 				// 忽略错误
 			}
 
@@ -532,7 +520,7 @@ class MindMapView extends ItemView {
 					// Type assertion: we know file is a string when it exists
 					this.filePath = leafState.state.file as string;
 				}
-			} catch (error) {
+			} catch {
 				// Leaf might not be available yet, ignore error
 			}
 		}
@@ -603,7 +591,7 @@ class MindMapView extends ItemView {
 					if (content.trim().startsWith('#mindmap')) {
 						filePath = activeFile.path;
 					}
-				} catch (error) {
+				} catch {
 					// Ignore errors reading file
 				}
 			}
@@ -761,7 +749,7 @@ class MindMapView extends ItemView {
 				// 重新渲染整个思维导图（这会自动恢复之前保存的视图状态）
 				this.renderer.render(container, this.mindMapData);
 			});
-		} catch (error) {
+		} catch {
 			// Ignore errors during state restoration
 		}
 	}
