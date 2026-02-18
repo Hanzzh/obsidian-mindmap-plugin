@@ -138,7 +138,7 @@ export class ClipboardManager {
 			}
 
 			// 检查剪贴板内容是否为 markdown 格式（包含列表标记）
-			const isMarkdownFormat = /^\s*[\*\-]/m.test(clipboardText);
+			const isMarkdownFormat = /^\s*[*-]/m.test(clipboardText);
 
 			if (isMarkdownFormat) {
 				// 如果是 markdown 格式，尝试创建子树

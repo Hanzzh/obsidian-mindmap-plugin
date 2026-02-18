@@ -6156,7 +6156,7 @@ var ClipboardManager = class {
       if (!clipboardText || clipboardText.trim().length === 0) {
         return false;
       }
-      const isMarkdownFormat = /^\s*[\*\-]/m.test(clipboardText);
+      const isMarkdownFormat = /^\s*[*-]/m.test(clipboardText);
       if (isMarkdownFormat) {
         return this.pasteSubtree(node, clipboardText);
       } else {
