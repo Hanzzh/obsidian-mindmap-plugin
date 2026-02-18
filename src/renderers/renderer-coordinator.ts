@@ -87,7 +87,7 @@ export class RendererCoordinator implements MindMapRenderer {
 	};
 
 	// 画布交互状态
-	private canvasInteractionEnabled: boolean = true;
+	private canvasInteractionEnabled = true;
 
 	// 布局配置系统
 	private layoutConfig = {
@@ -107,7 +107,7 @@ export class RendererCoordinator implements MindMapRenderer {
 
 	// 回调
 	onDataUpdated?: () => void;
-	onTextChanged?: (node: d3.HierarchyNode<any>, newText: string) => void;
+	onTextChanged?: (node: d3.HierarchyNode<d3.HierarchyNode<MindMapNode>>, newText: string) => void;
 	onDataRestored?: (data: MindMapData) => void;
 
 	constructor(
@@ -773,7 +773,7 @@ export class RendererCoordinator implements MindMapRenderer {
 	 */
 	private calculateDynamicTreeHeight(root: d3.HierarchyNode<any>): number {
 		let maxDepth = 0;
-		let nodesAtDepth: { [key: number]: d3.HierarchyNode<any>[] } = {};
+		const nodesAtDepth: Record<number, d3.HierarchyNode<any>[]> = {};
 
 		// 统计每层的节点和最大深度
 		root.each(node => {

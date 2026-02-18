@@ -36,6 +36,7 @@ export interface InteractionState {
 /**
  * 渲染回调接口（桥接交互和渲染）
  */
+ 
 export interface RenderCallbacks {
 	onNodeSelected?: (node: d3.HierarchyNode<MindMapNode>) => void;
 	onNodeHovered?: (node: d3.HierarchyNode<MindMapNode>) => void;
@@ -52,6 +53,7 @@ export interface RenderCallbacks {
 	onUndo?: () => void;
 	onRedo?: () => void;
 }
+ 
 
 /**
  * Interaction manager class

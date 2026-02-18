@@ -1,20 +1,20 @@
 /**
- * AI Assistant - AI 节点建议功能
+ * AI Assistant - AI node suggestion functionality
  *
- * 【职责】
- * - 渲染 AI 建议按钮
- * - 触发 AI 请求获取子节点建议
- * - 显示建议面板
- * - 处理建议选择和节点创建
- * - 管理加载状态和已选择建议
+ * [Responsibilities]
+ * - Render AI suggestion button
+ * - Trigger AI requests to get child node suggestions
+ * - Show suggestion panel
+ * - Handle suggestion selection and node creation
+ * - Manage loading state and selected suggestions
  *
- * 【设计原则】
- * - 通过回调与外部通信，不直接依赖 D3TreeRenderer
- * - 管理自己的状态（selectedSuggestions, loadingNotice）
- * - 提供清晰的 API 用于按钮渲染和触发
+ * [Design Principles]
+ * - Communicate with external via callbacks, no direct dependency on D3TreeRenderer
+ * - Manage own state (selectedSuggestions, loadingNotice)
+ * - Provide clear API for button rendering and triggering
  *
- * 【重构来源】
- * 从 D3TreeRenderer.ts 提取（Phase 3.1）
+ * [Refactoring Source]
+ * Extracted from D3TreeRenderer.ts (Phase 3.1)
  * - renderAISuggestButton() → renderAIButton()
  * - removeAISuggestButton() → removeAIButton()
  * - triggerAISuggestions() → triggerSuggestions()
@@ -25,21 +25,19 @@
 import * as d3 from 'd3';
 import { Notice } from 'obsidian';
 import { MindMapNode } from '../interfaces/mindmap-interfaces';
-import { MindMapService } from '../services/mindmap-service';
-import { MindMapMessages } from '../i18n';
 
 /**
- * AI Assistant 回调接口
+ * AI Assistant callback interface
  */
 export interface AIAssistantCallbacks {
 	/**
-	 * 节点创建成功后调用，用于刷新渲染
+	 * Called after node is successfully created, used to refresh rendering
 	 */
 	onNodeCreated?: () => void;
 }
 
 /**
- * 节点尺寸接口（简化版）
+ * Node dimensions interface (simplified version)
  */
 export interface NodeDimensions {
 	width: number;
@@ -47,69 +45,67 @@ export interface NodeDimensions {
 }
 
 /**
- * AI Assistant 类
+ * AI Assistant class
  *
- * 管理 AI 节点建议的完整生命周期
+ * Manages complete lifecycle of AI node suggestions
  */
 export class AIAssistant {
-	// 已选择的建议追踪
-	private selectedSuggestions: Set<string> = new Set();
+	// Selected suggestions tracking
+	private selectedSuggestions = new Set<string>();
 
-	// AI 建议加载提示
+	// AI suggestion loading notice
 	private loadingNotice: Notice | null = null;
 
-	constructor(
-		private mindMapService: MindMapService,
-		private messages: MindMapMessages,
-		private callbacks: AIAssistantCallbacks = {}
-	) {}
+	constructor() {
+		// Instance variables are used in class methods
+	}
 
 	/**
-	 * 渲染 AI 建议按钮
+	 * Render AI suggestion button
 	 *
-	 * @param nodeElement 节点元素选择集
-	 * @param node 节点数据
-	 * @param dimensions 节点尺寸
+	 * @param nodeElement Node element selection set
+	 * @param node Node data
+	 * @param dimensions Node dimensions
 	 */
 	renderAIButton(
 		nodeElement: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>,
 		node: d3.HierarchyNode<MindMapNode>,
 		dimensions: NodeDimensions
 	): void {
-		// 检查是否已经存在 AI 按钮
+		// Check if AI button already exists
 		const existingAIButton = nodeElement.select(".ai-suggest-button-group");
 		if (!existingAIButton.empty()) {
-			return; // AI 按钮已存在则不重复创建
+			return; // Don't create duplicate if AI button already exists
 		}
 
-		// 计算两个按钮的总高度（+号按钮20px + 间距10px + AI按钮20px = 50px）
+		// Calculate total height of both buttons (plus button 20px + spacing 10px + AI button 20px = 50px)
 		const totalButtonsHeight = 20 + 10 + 20;
-		// AI按钮位于下方位置：+号按钮Y位置 + 20px (+号按钮高度) + 10px (间距)
+		// AI button positioned at bottom: plus button Y position + 20px (plus button height) + 10px (spacing)
 		const buttonY = (dimensions.height - totalButtonsHeight) / 2 + 20 + 10;
-		const buttonX = dimensions.width + 4; // 与+号按钮水平对齐
+		const buttonX = dimensions.width + 4; // Horizontally aligned with plus button
 
-		// 创建 AI 建议按钮组
+		// Create AI suggestion button group
 		const buttonGroup = nodeElement.append("g")
 			.attr("class", "ai-suggest-button-group")
 			.attr("transform", `translate(${buttonX}, ${buttonY})`);
 
-		// 添加点击事件处理器
+		// Add click event handler
 		buttonGroup.on("click", (event: MouseEvent) => {
 			event.stopPropagation();
 			void this.triggerSuggestions(node);
 		});
 
-		// 创建圆形背景（紫色）
+		// Create circular background (purple)
 		buttonGroup.append("circle")
 			.attr("class", "ai-suggest-button-bg")
 			.attr("cx", 10)
 			.attr("cy", 10)
 			.attr("r", 10)
-			.attr("fill", "#9333ea")  // 紫色背景
+			.attr("fill", "#9333ea")  // Purple background
 			.style("opacity", 0.9)
 			.style("cursor", "pointer");
 
-		// 创建 emoji 图标
+		// Create emoji icon
 		buttonGroup.append("text")
 			.attr("class", "ai-suggest-button-text")
 			.attr("x", 10)
@@ -121,15 +117,15 @@ export class AIAssistant {
 			.style("pointer-events", "none")
 			.text("✨");
 
-		// 添加标题提示
+		// Add title tooltip
 		buttonGroup.append("title")
 			.text("AI Suggestions");
 	}
 
 	/**
-	 * 移除 AI 建议按钮
+	 * Remove AI suggestion button
 	 *
-	 * @param nodeElement 节点元素选择集
+	 * @param nodeElement Node element selection set
 	 */
 	removeAIButton(
 		nodeElement: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>
@@ -141,18 +137,18 @@ export class AIAssistant {
 	}
 
 	/**
-	 * 触发 AI 建议请求
+	 * Trigger AI suggestion request
 	 *
-	 * @param node 要获取建议的节点
+	 * @param node Node to get suggestions for
 	 */
 	async triggerSuggestions(node: d3.HierarchyNode<MindMapNode>): Promise<void> {
-		// 验证服务可用性
+		// Validate service availability
 		if (!this.mindMapService) {
 			new Notice(this.messages.errors.serviceNotAvailable);
 			return;
 		}
 
-		// 空节点验证
+		// Empty node validation
 		const nodeText = node.data.text?.trim() || '';
 
 		if (!nodeText) {
@@ -160,23 +156,23 @@ export class AIAssistant {
 			return;
 		}
 
-		// 清理之前的加载提示（如果存在）
+		// Clean up previous loading notice (if exists)
 		if (this.loadingNotice) {
 			this.loadingNotice.hide();
 			this.loadingNotice = null;
 		}
 
-		// 显示持久化的加载提示（无超时，会持续显示直到手动隐藏）
+		// Show persistent loading notice (no timeout, will display until manually hidden)
 		this.loadingNotice = new Notice(this.messages.format(
 			this.messages.notices.aiAnalyzing,
 			{ nodeText }
 		), 0);
 
 		try {
-			// 调用 MindMapService 获取建议
+			// Call MindMapService to get suggestions
 			const suggestions = await this.mindMapService.suggestChildNodes(node.data);
 
-			// 成功后隐藏加载提示
+			// Hide loading notice after success
 			if (this.loadingNotice) {
 				this.loadingNotice.hide();
 				this.loadingNotice = null;
@@ -187,11 +183,11 @@ export class AIAssistant {
 				return;
 			}
 
-			// 显示建议面板
+			// Show suggestion panel
 			this.showSuggestionsPanel(node, suggestions);
 		} catch (error) {
 
-			// 错误时也隐藏加载提示
+			// Hide loading notice on error too
 			if (this.loadingNotice) {
 				this.loadingNotice.hide();
 				this.loadingNotice = null;
@@ -206,34 +202,34 @@ export class AIAssistant {
 	}
 
 	/**
-	 * 显示建议列表面板
+	 * Show suggestion list panel
 	 *
-	 * @param node 父节点
-	 * @param suggestions 建议列表
+	 * @param node Parent node
+	 * @param suggestions Suggestion list
 	 */
 	private showSuggestionsPanel(
 		node: d3.HierarchyNode<MindMapNode>,
 		suggestions: string[]
 	): void {
-		// 移除旧面板
+		// Remove old panel
 		this.hideSuggestionsPanel();
 
-		// 创建面板容器
+		// Create panel container
 		const panel = document.createElement("div");
 		panel.className = "ai-suggestions-panel";
 
-		// 标题和操作按钮区域
+		// Title and action buttons area
 		const header = document.createElement("div");
 		header.className = "ai-suggestions-header";
 
 		const title = document.createElement("h4");
 		title.textContent = this.messages.ui.aiSuggestionsTitle;
 
-		// 操作按钮容器
+		// Action buttons container
 		const actionButtons = document.createElement("div");
 		actionButtons.className = "ai-suggestions-actions";
 
-		// 全选按钮
+		// Select all button
 		const selectAllBtn = document.createElement("button");
 		selectAllBtn.className = "ai-suggestions-select-all";
 		selectAllBtn.textContent = this.messages.ui.aiAddAll;
@@ -241,7 +237,7 @@ export class AIAssistant {
 		selectAllBtn.onclick = () => {
 			suggestions.forEach(suggestion => {
 				if (!this.selectedSuggestions.has(suggestion)) {
-					// 查找对应的列表项
+					// Find corresponding list item
 					const listItem = Array.from(list.children).find(
 						item => item.textContent?.includes(suggestion)
 					) as HTMLElement;
@@ -250,7 +246,7 @@ export class AIAssistant {
 			});
 		};
 
-		// 关闭按钮
+		// Close button
 		const closeBtn = document.createElement("button");
 		closeBtn.className = "ai-suggestions-close";
 		closeBtn.textContent = this.messages.ui.aiClose;
@@ -262,7 +258,7 @@ export class AIAssistant {
 		header.appendChild(actionButtons);
 		panel.appendChild(header);
 
-		// 建议列表
+		// Suggestion list
 		const list = document.createElement("ul");
 		list.className = "ai-suggestions-list";
 
@@ -270,18 +266,18 @@ export class AIAssistant {
 			const item = document.createElement("li");
 			item.className = "ai-suggestion-item";
 
-			// 检查是否已选择（用于面板重新打开的情况）
+			// Check if already selected (for panel reopen scenario)
 			const isSelected = this.selectedSuggestions.has(suggestion);
 			if (isSelected) {
 				item.classList.add('ai-suggestion-item-selected');
 			}
 
-			// 创建对勾占位元素
+			// Create checkmark placeholder element
 			const checkmark = document.createElement("span");
 			checkmark.className = "ai-suggestion-checkmark";
 			checkmark.textContent = isSelected ? '✓' : '';
 
-			// 创建建议文本
+			// Create suggestion text
 			const text = document.createElement("span");
 			text.className = "ai-suggestion-text";
 			text.textContent = suggestion;
@@ -289,7 +285,7 @@ export class AIAssistant {
 			item.appendChild(checkmark);
 			item.appendChild(text);
 
-			// 点击事件：如果未选择才创建
+			// Click event: only create if not selected
 			item.onclick = () => {
 				if (!this.selectedSuggestions.has(suggestion)) {
 					this.createChildFromSuggestion(node, suggestion, item);
@@ -306,12 +302,12 @@ export class AIAssistant {
 
 		panel.appendChild(list);
 
-		// 添加到 document.body（避免被重新渲染移除）
+		// Add to document.body (avoid being removed by re-rendering)
 		document.body.appendChild(panel);
 	}
 
 	/**
-	 * 关闭建议面板
+	 * Close suggestion panel
 	 */
 	private hideSuggestionsPanel(): void {
 		const panel = document.querySelector(".ai-suggestions-panel");
@@ -321,18 +317,18 @@ export class AIAssistant {
 	}
 
 	/**
-	 * 从建议创建子节点
+	 * Create child node from suggestion
 	 *
-	 * @param parentNode 父节点
-	 * @param suggestion 建议文本
-	 * @param listItemElement 列表项元素（可选，用于更新UI）
+	 * @param parentNode Parent node
+	 * @param suggestion Suggestion text
+	 * @param listItemElement List item element (optional, for updating UI)
 	 */
 	private createChildFromSuggestion(
 		parentNode: d3.HierarchyNode<MindMapNode>,
 		suggestion: string,
 		listItemElement?: HTMLElement
 	): void {
-		// 防止重复创建相同建议
+		// Prevent duplicate creation of same suggestion
 		if (this.selectedSuggestions.has(suggestion)) {
 			new Notice(this.messages.format(
 				this.messages.notices.alreadyAdded || `Already added: {nodeText}`,
@@ -342,32 +338,32 @@ export class AIAssistant {
 		}
 
 		try {
-			// 创建子节点
+			// Create child node
 			this.mindMapService.createChildNode(parentNode.data, suggestion);
 
-			// 追踪已选择的建议
+			// Track selected suggestion
 			this.selectedSuggestions.add(suggestion);
 
-			// 刷新渲染
+			// Refresh rendering
 			this.callbacks.onNodeCreated?.();
 
-			// 标记列表项为已选择（如果提供了列表项元素）
+			// Mark list item as selected (if list item element provided)
 			if (listItemElement) {
 				listItemElement.classList.add('ai-suggestion-item-selected');
-				// 显示对勾图标
+				// Show checkmark icon
 				const checkmark = listItemElement.querySelector('.ai-suggestion-checkmark');
 				if (checkmark) {
 					checkmark.textContent = '✓';
 				}
 			}
 
-			// 显示成功提示
+			// Show success notice
 			new Notice(this.messages.format(
 				this.messages.notices.nodeCreated || `Created: {nodeText}`,
 				{ nodeText: suggestion }
 			));
 
-			// 不再自动关闭面板，允许用户继续选择其他建议
+			// No longer auto-close panel, allow user to continue selecting other suggestions
 		} catch (error) {
 			new Notice(this.messages.format(
 				this.messages.notices.nodeCreateFailed || `Failed to create node: {error}`,
@@ -377,30 +373,30 @@ export class AIAssistant {
 	}
 
 	/**
-	 * 清除已选择建议的追踪
+	 * Clear selected suggestions tracking
 	 *
-	 * 当切换到不同的节点或重新打开 mind map 时调用
+	 * Called when switching to different nodes or reopening mind map
 	 */
 	clearSelectedSuggestions(): void {
 		this.selectedSuggestions.clear();
 	}
 
 	/**
-	 * 销毁 AI Assistant
+	 * Destroy AI Assistant
 	 *
-	 * 清理资源和隐藏面板
+	 * Clean up resources and hide panel
 	 */
 	destroy(): void {
-		// 隐藏建议面板
+		// Hide suggestion panel
 		this.hideSuggestionsPanel();
 
-		// 隐藏加载提示
+		// Hide loading notice
 		if (this.loadingNotice) {
 			this.loadingNotice.hide();
 			this.loadingNotice = null;
 		}
 
-		// 清空已选择建议
+		// Clear selected suggestions
 		this.selectedSuggestions.clear();
 	}
 }

@@ -1,20 +1,20 @@
 /**
- * Node Editor - 节点编辑功能
+ * Node Editor - Node editing functionality
  *
- * 【职责】
- * - 进入/退出编辑模式
- * - 文本验证
- * - 保存/取消编辑
- * - 编辑UI提示
- * - 处理编辑快捷键
+ * [Responsibilities]
+ * - Enter/exit edit mode
+ * - Text validation
+ * - Save/cancel editing
+ * - Edit UI hints
+ * - Handle edit keyboard shortcuts
  *
- * 【设计原则】
- * - 通过回调与外部通信，不直接依赖 D3TreeRenderer
- * - 管理自己的状态（editingState, canvasInteractionEnabled）
- * - 提供清晰的 API 用于编辑操作
+ * [Design Principles]
+ * - Communicate with external via callbacks, no direct dependency on D3TreeRenderer
+ * - Manage own state (editingState, canvasInteractionEnabled)
+ * - Provide clear API for edit operations
  *
- * 【重构来源】
- * 从 D3TreeRenderer.ts 提取（Phase 3.2）
+ * [Refactoring Source]
+ * Extracted from D3TreeRenderer.ts (Phase 3.2)
  * - enableNodeEditing() → enableEditing()
  * - exitEditMode() → exitEditMode()
  * - cancelEditMode() → cancelEdit()
@@ -34,44 +34,44 @@ import { MindMapMessages } from '../i18n';
 import { VALIDATION_CONSTANTS } from '../constants/mindmap-constants';
 
 /**
- * Node Editor 回调接口
+ * Node Editor callback interface
  */
 export interface NodeEditorCallbacks {
 	/**
-	 * 文本改变前调用，用于保存 undo 快照
+	 * Called before text changes, used to save undo snapshot
 	 */
 	onBeforeTextChange?: (node: d3.HierarchyNode<MindMapNode>) => void;
 
 	/**
-	 * 文本改变后调用，用于触发文件保存
+	 * Called after text changes, used to trigger file save
 	 */
 	onTextChanged?: (node: d3.HierarchyNode<MindMapNode>, newText: string) => void;
 
 	/**
-	 * 画布交互状态改变时调用
+	 * Called when canvas interaction state changes
 	 */
 	onCanvasInteractionChanged?: (enabled: boolean) => void;
 }
 
 /**
- * Node Editor 类
+ * Node Editor class
  *
- * 管理节点编辑的完整生命周期
+ * Manages complete lifecycle of node editing
  */
 export class NodeEditor {
-	// 编辑状态
+	// Editing state
 	private editingState: EditingState;
 
-	// 画布交互状态
-	private canvasInteractionEnabled: boolean = true;
+	// Canvas interaction state
+	private canvasInteractionEnabled = true;
 
 	constructor(
 		private config: MindMapConfig,
 		private messages: MindMapMessages,
 		private callbacks: NodeEditorCallbacks = {},
-		editingState?: EditingState  // ✅ 接收外部 editingState
+		editingState?: EditingState  // ✅ Accept external editingState
 	) {
-		// 如果没有提供，创建内部状态（向后兼容）
+		// If not provided, create internal state (backward compatible)
 		this.editingState = editingState || {
 			isEditing: false,
 			currentNode: null,
@@ -81,52 +81,52 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 启用节点编辑模式
+	 * Enable node editing mode
 	 *
-	 * @param node 要编辑的节点
-	 * @param editElement 可编辑的文本元素
+	 * @param node Node to edit
+	 * @param editElement Editable text element
 	 */
 	enableEditing(
 		node: d3.HierarchyNode<MindMapNode>,
 		editElement: HTMLDivElement
 	): void {
-		// 检查是否为根节点（中心主题），不允许编辑
+		// Check if it's root node (central topic), not allowed to edit
 		if (node.depth === 0) {
 			this.showRootNodeEditWarning();
 			return;
 		}
 
-		// 如果正在编辑其他节点，先退出编辑模式
+		// If editing another node, exit edit mode first
 		if (this.editingState.isEditing && this.editingState.currentNode !== node) {
 			this.exitEditMode();
 		}
 
-		// 禁用画布交互（拖拽、缩放），允许文本选择和编辑
+		// Disable canvas interaction (drag, zoom), allow text selection and editing
 		this.setCanvasInteraction(false);
 
-		// 设置编辑状态（修改属性，不重新赋值对象）
+		// Set editing state (modify properties, don't reassign object)
 		this.editingState.isEditing = true;
 		this.editingState.currentNode = node;
 		this.editingState.originalText = node.data.text;
 		this.editingState.editElement = editElement;
 
 		try {
-			// 设置为可编辑
+			// Set to editable
 			editElement.contentEditable = "true";
 
-			// 添加编辑样式类
+			// Add editing style class
 			editElement.classList.add("editing");
 
-			// 添加节点编辑状态
+			// Add node editing state
 			const nodeElement = d3.select(editElement.closest("g"));
 			nodeElement.classed("node-editing", true);
 
-			// 设置焦点并全选文本（使用 setTimeout 确保事件处理完成）
+			// Set focus and select all text (use setTimeout to ensure event handling completes)
 			setTimeout(() => {
 				try {
 					editElement.focus();
 
-					// 全选文本 - 使用 range.selectNodeContents（与 tmp 分支一致）
+					// Select all text - use range.selectNodeContents (consistent with tmp branch)
 					const range = document.createRange();
 					range.selectNodeContents(editElement);
 					const selection = window.getSelection();
@@ -140,7 +140,7 @@ export class NodeEditor {
 				}
 			}, 10);
 
-			// 显示编辑提示（延后调用，避免干扰焦点）
+			// Show editing hint (delayed call to avoid interfering with focus)
 			setTimeout(() => {
 				this.showEditingHint();
 			}, 100);
@@ -152,29 +152,29 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 退出编辑模式
+	 * Exit edit mode
 	 */
 	exitEditMode(): void {
 		if (!this.editingState.isEditing) return;
 
 		const { editElement } = this.editingState;
 
-		// 恢复画布交互
+		// Restore canvas interaction
 		this.setCanvasInteraction(true);
 
 		if (editElement) {
 			try {
-				// 设置为不可编辑
+				// Set to non-editable
 				editElement.contentEditable = "false";
 				editElement.classList.remove("editing");
 
-				// 清除文本选区，防止退出编辑后文本仍保持选中状态
+				// Clear text selection to prevent text remaining selected after exiting edit mode
 				const selection = window.getSelection();
 				if (selection) {
 					selection.removeAllRanges();
 				}
 
-				// 移除节点编辑状态
+				// Remove node editing state
 				const nodeElement = d3.select(editElement.closest("g"));
 				nodeElement.classed("node-editing", false);
 			} catch {
@@ -182,10 +182,10 @@ export class NodeEditor {
 			}
 		}
 
-		// 隐藏编辑提示
+		// Hide editing hint
 		this.hideEditingHint();
 
-		// 重置编辑状态（清空属性，不重新赋值对象）
+		// Reset editing state (clear properties, don't reassign object)
 		this.editingState.isEditing = false;
 		this.editingState.currentNode = null;
 		this.editingState.originalText = '';
@@ -193,25 +193,25 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 取消编辑模式（恢复原始文本）
+	 * Cancel edit mode (restore original text)
 	 */
 	cancelEdit(): void {
 		if (!this.editingState.isEditing) return;
 
 		const { editElement } = this.editingState;
 
-		// 恢复原始文本
+		// Restore original text
 		if (editElement && this.editingState.originalText) {
 			editElement.textContent = this.editingState.originalText;
 		}
 
-		// 调用 exitEditMode 进行清理
-		// 由于文本已恢复，exitEditMode 中的保存检查会跳过（因为 currentText === originalText）
+		// Call exitEditMode for cleanup
+		// Since text is restored, save check in exitEditMode will be skipped (because currentText === originalText)
 		this.exitEditMode();
 	}
 
 	/**
-	 * 保存节点文本
+	 * Save node text
 	 */
 	saveText(): void {
 
@@ -226,30 +226,30 @@ export class NodeEditor {
 
 
 		try {
-			// 验证新文本
+			// Validate new text
 			if (!this.validateText(newText)) {
 				this.showValidationError(this.messages.errors.nodeTextEmpty);
 				return;
 			}
 
-			// 检查文本是否真的有变化
+			// Check if text really changed
 			if (newText === this.editingState.originalText) {
 				this.exitEditMode();
 				return;
 			}
 
-			// 在修改前保存快照
+			// Save snapshot before modification
 			this.callbacks.onBeforeTextChange?.(currentNode);
 
-			// 更新数据结构
+			// Update data structure
 			currentNode.data.text = newText;
 
-			// 触发文件保存回调
+			// Trigger file save callback
 			this.callbacks.onTextChanged?.(currentNode, newText);
 
 		} catch {
 			this.showValidationError(this.messages.errors.saveFailed);
-			// 恢复原始文本
+			// Restore original text
 			editElement.textContent = this.editingState.originalText;
 		}
 
@@ -257,23 +257,23 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 验证节点文本
+	 * Validate node text
 	 *
-	 * @param text 要验证的文本
-	 * @returns 是否有效
+	 * @param text Text to validate
+	 * @returns Whether valid
 	 */
 	validateText(text: string): boolean {
-		// 检查是否为空或只有空白字符
+		// Check if empty or only whitespace
 		if (!text || text.trim().length === 0) {
 			return false;
 		}
 
-		// 检查长度限制（使用配置常量）
+		// Check length limit (using config constants)
 		if (text.length > VALIDATION_CONSTANTS.MAX_TEXT_LENGTH) {
 			return false;
 		}
 
-		// 检查是否包含非法字符
+		// Check for invalid characters
 		const invalidChars = VALIDATION_CONSTANTS.INVALID_CHARACTERS;
 		if (invalidChars.some(char => text.includes(char))) {
 			return false;
@@ -283,41 +283,41 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 获取当前编辑状态（只读）
-	 * 注意：返回的是真实引用，用于 TextRenderer 等模块检查状态
+	 * Get current editing state (read-only)
+	 * Note: Returns real reference, used by TextRenderer and other modules to check state
 	 */
 	getEditingState(): Readonly<EditingState> {
 		return this.editingState;
 	}
 
 	/**
-	 * 是否正在编辑
+	 * Whether currently editing
 	 */
 	isEditing(): boolean {
 		return this.editingState.isEditing;
 	}
 
 	/**
-	 * 检查画布交互是否启用
+	 * Check if canvas interaction is enabled
 	 */
 	isCanvasInteractionEnabled(): boolean {
 		return this.canvasInteractionEnabled;
 	}
 
 	/**
-	 * 销毁
+	 * Destroy
 	 */
 	destroy(): void {
-		// 退出编辑模式（如果正在编辑）
+		// Exit edit mode (if editing)
 		this.exitEditMode();
-		// 隐藏编辑提示
+		// Hide editing hint
 		this.hideEditingHint();
 	}
 
-	// ========== 私有方法 ==========
+	// ========== Private Methods ==========
 
 	/**
-	 * 设置画布交互状态
+	 * Set canvas interaction state
 	 */
 	private setCanvasInteraction(enabled: boolean): void {
 		this.canvasInteractionEnabled = enabled;
@@ -325,14 +325,14 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 显示编辑提示
+	 * Show editing hint
 	 */
 	private showEditingHint(): void {
 		let hintElement = document.querySelector('.editing-hint');
 		if (!hintElement) {
 			hintElement = document.createElement('div');
 			hintElement.className = 'editing-hint';
-			// 根据设备类型选择不同的提示文案
+			// Select different hint text based on device type
 			const editHint = this.config.isMobile
 				? this.messages.ui.editHintMobile
 				: this.messages.ui.editHintDesktop;
@@ -344,7 +344,7 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 隐藏编辑提示
+	 * Hide editing hint
 	 */
 	private hideEditingHint(): void {
 		const hintElement = document.querySelector('.editing-hint');
@@ -354,23 +354,23 @@ export class NodeEditor {
 	}
 
 	/**
-	 * 显示根节点编辑警告
+	 * Show root node edit warning
 	 */
 	private showRootNodeEditWarning(): void {
 		new Notice(this.messages.validation.cannotEditRoot, 3000);
 	}
 
 	/**
-	 * 显示验证错误
+	 * Show validation error
 	 */
 	private showValidationError(message: string): void {
-		// 创建临时的错误提示
+		// Create temporary error hint
 		const errorElement = document.createElement('div');
 		errorElement.className = 'mind-map-validation-error';
 		errorElement.textContent = message;
 		document.body.appendChild(errorElement);
 
-		// 3秒后自动移除
+		// Auto remove after 3 seconds
 		setTimeout(() => {
 			errorElement.classList.add('fading-out');
 			setTimeout(() => {
@@ -380,7 +380,7 @@ export class NodeEditor {
 			}, 200);
 		}, 3000);
 
-		// 如果处于编辑状态，尝试恢复
+		// Try to recover if in editing state
 		if (this.editingState.isEditing) {
 			try {
 				this.exitEditMode();

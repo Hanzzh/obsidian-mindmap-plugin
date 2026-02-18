@@ -1,26 +1,26 @@
 /**
- * Clipboard Manager - 剪贴板管理功能
+ * Clipboard Manager - Clipboard management functionality
  *
- * 【职责】
- * - 复制节点/子树到剪贴板（markdown 格式）
- * - 从剪贴板粘贴文本创建子节点/子树
- * - 剪切节点（复制+删除）
- * - 剪贴板内容格式检测（markdown vs 普通文本）
- * - 成功/失败提示
+ * [Responsibilities]
+ * - Copy node/subtree to clipboard (markdown format)
+ * - Paste text from clipboard to create child node/subtree
+ * - Cut node (copy + delete)
+ * - Clipboard content format detection (markdown vs plain text)
+ * - Success/failure notifications
  *
- * 【设计原则】
- * - 通过回调与外部通信，不直接依赖 D3TreeRenderer
- * - 管理自己的剪贴板操作
- * - 提供清晰的 API 用于剪贴板操作
- * - 智能降级（现代 API → 传统方法）
+ * [Design Principles]
+ * - Communicate with external via callbacks, no direct dependency on D3TreeRenderer
+ * - Manage own clipboard operations
+ * - Provide clear API for clipboard operations
+ * - Smart fallback (modern API → legacy method)
  *
- * 【重构来源】
- * 从 D3TreeRenderer.ts 提取（Phase 3.3）
+ * [Refactoring Source]
+ * Extracted from D3TreeRenderer.ts (Phase 3.3)
  * - handleToolbarCopyClick() → copyNode()
  * - handleToolbarPasteClick() → pasteToNode()
  * - fallbackCopyTextToClipboard() → fallbackCopy()
- * - showCopySuccessNotice() → (内置)
- * - showCopyErrorNotice() → (内置)
+ * - showCopySuccessNotice() → (built-in)
+ * - showCopyErrorNotice() → (built-in)
  */
 
 import * as d3 from 'd3';
@@ -39,56 +39,59 @@ function setCssProps(element: HTMLElement, props: Record<string, string>): void 
 }
 
 /**
- * Clipboard Manager 回调接口
+ * Clipboard Manager callback interface
  */
 export interface ClipboardManagerCallbacks {
 	/**
-	 * 粘贴后需要刷新数据时调用
+	 * Called when data needs to be refreshed after pasting
 	 */
 	onDataUpdated?: () => void;
 
 	/**
-	 * 粘贴后需要清除选择时调用
+	 * Called when selection needs to be cleared after pasting
 	 */
 	clearSelection?: () => void;
 }
 
 /**
- * Clipboard Manager 类
+ * Clipboard Manager class
  *
- * 管理剪贴板的完整操作生命周期
+ * Manages complete lifecycle of clipboard operations
  */
 export class ClipboardManager {
+
 	constructor(
 		private mindMapService: MindMapService,
 		private messages: MindMapMessages,
 		private callbacks: ClipboardManagerCallbacks = {}
-	) {}
+	) {
+		// Instance variables are used in class methods
+	}
 
 	/**
-	 * 复制节点到剪贴板（序列化为 markdown 格式）
+	 * Copy node to clipboard (serialize as markdown format)
 	 *
-	 * @param node 要复制的节点
-	 * @returns Promise<boolean> 是否成功
+	 * @param node Node to copy
+	 * @returns Promise<boolean> Whether successful
 	 */
 	async copyNode(node: d3.HierarchyNode<MindMapNode>): Promise<boolean> {
 		try {
-			// 序列化整个子树为 markdown 格式
+			// Serialize entire subtree to markdown format
 			const markdown = this.mindMapService.serializeSubtreeToMarkdown(node.data);
 
-			// 使用 Clipboard API 复制文本到剪贴板
+			// Use Clipboard API to copy text to clipboard
 			if (navigator.clipboard && window.isSecureContext) {
-				// 使用现代 Clipboard API（支持移动端和桌面端）
+				// Use modern Clipboard API (supports mobile and desktop)
 				try {
 					await navigator.clipboard.writeText(markdown);
 					this.showSuccessNotice(this.messages.notices.nodeTextCopied);
 					return true;
 				} catch {
-					// 降级方案：使用传统方法
+					// Fallback: use legacy method
 					return this.fallbackCopy(markdown);
 				}
 			} else {
-				// 降级方案：使用传统方法
+				// Fallback: use legacy method
 				return this.fallbackCopy(markdown);
 			}
 		} catch {
@@ -98,24 +101,24 @@ export class ClipboardManager {
 	}
 
 	/**
-	 * 剪切节点（复制+删除）
+	 * Cut node (copy + delete)
 	 *
-	 * @param node 要剪切的节点
-	 * @returns Promise<boolean> 是否成功
+	 * @param node Node to cut
+	 * @returns Promise<boolean> Whether successful
 	 */
 	async cutNode(node: d3.HierarchyNode<MindMapNode>): Promise<boolean> {
-		// 先执行复制操作
+		// Perform copy operation first
 		const copySuccess = await this.copyNode(node);
 
 		if (copySuccess) {
-			// 复制成功后执行删除
+			// Perform delete after successful copy
 			const deleteSuccess = this.mindMapService.deleteNode(node.data);
 
 			if (deleteSuccess) {
-				// 清除选中状态
+				// Clear selected state
 				this.callbacks.clearSelection?.();
 
-				// 触发数据更新
+				// Trigger data update
 				this.callbacks.onDataUpdated?.();
 				return true;
 			}
@@ -125,53 +128,53 @@ export class ClipboardManager {
 	}
 
 	/**
-	 * 粘贴剪贴板内容到节点
+	 * Paste clipboard content to node
 	 *
-	 * @param node 目标节点（将作为父节点）
-	 * @returns Promise<boolean> 是否成功
+	 * @param node Target node (will be used as parent node)
+	 * @returns Promise<boolean> Whether successful
 	 */
 	async pasteToNode(node: d3.HierarchyNode<MindMapNode>): Promise<boolean> {
 		try {
-			// 检查 Clipboard API 是否可用
+			// Check if Clipboard API is available
 			if (!navigator.clipboard || !window.isSecureContext) {
 				return false;
 			}
 
-			// 读取剪贴板内容
+			// Read clipboard content
 			const clipboardText = await navigator.clipboard.readText();
 
-			// 静默失败：如果剪贴板为空或无法读取，直接返回
+			// Silent failure: if clipboard is empty or cannot be read, return directly
 			if (!clipboardText || clipboardText.trim().length === 0) {
 				return false;
 			}
 
-			// 检查剪贴板内容是否为 markdown 格式（包含列表标记）
+			// Check if clipboard content is markdown format (contains list markers)
 			const isMarkdownFormat = /^\s*[-*]/m.test(clipboardText);
 
 			if (isMarkdownFormat) {
-				// 如果是 markdown 格式，尝试创建子树
+				// If markdown format, try to create subtree
 				return this.pasteSubtree(node, clipboardText);
 			} else {
-				// 普通文本，创建单个子节点
+				// Plain text, create single child node
 				return this.pasteText(node, clipboardText);
 			}
 		} catch {
-			// 静默失败：不显示任何错误提示
+			// Silent failure: don't show any error message
 			return false;
 		}
 	}
 
 	/**
-	 * 销毁
+	 * Destroy
 	 */
 	destroy(): void {
-		// 清理资源（如果需要）
+		// Clean up resources (if needed)
 	}
 
-	// ========== 私有方法 ==========
+	// ========== Private Methods ==========
 
 	/**
-	 * 降级复制方案（兼容旧浏览器）
+	 * Fallback copy method (compatible with older browsers)
 	 *
 	 * Note: This uses the deprecated execCommand as a fallback for older browsers
 	 * that don't support the modern Clipboard API. The modern API is tried first
@@ -205,7 +208,6 @@ export class ClipboardManager {
 		textArea.select();
 
 		try {
-			// eslint-disable-next-line deprecation/deprecation
 			const successful = document.execCommand('copy');
 			if (successful) {
 				this.showSuccessNotice(this.messages.notices.nodeTextCopied);
@@ -223,71 +225,71 @@ export class ClipboardManager {
 	}
 
 	/**
-	 * 粘贴子树（markdown 格式）
+	 * Paste subtree (markdown format)
 	 */
 	private pasteSubtree(
 		node: d3.HierarchyNode<MindMapNode>,
 		clipboardText: string
 	): boolean {
-		// 尝试从 markdown 创建子树
+		// Try to create subtree from markdown
 		const subtreeRoot = this.mindMapService.createSubtreeFromMarkdown(
 			clipboardText,
 			node.data.level
 		);
 
 		if (subtreeRoot) {
-			// 设置父节点
+			// Set parent node
 			subtreeRoot.parent = node.data;
 			node.data.children.push(subtreeRoot);
 
-			// 清除当前选择
+			// Clear current selection
 			this.callbacks.clearSelection?.();
 
-			// 修复：直接在数据层设置选中状态
+			// Fix: Set selected state directly at data layer
 			subtreeRoot.selected = true;
 
-			// 触发数据更新
+			// Trigger data update
 			this.callbacks.onDataUpdated?.();
 			return true;
 		} else {
-			// 如果解析失败，回退到普通文本处理
+			// If parsing fails, fallback to plain text handling
 			return this.pasteText(node, clipboardText);
 		}
 	}
 
 	/**
-	 * 粘贴普通文本（创建单个子节点）
+	 * Paste plain text (create single child node)
 	 */
 	private pasteText(
 		node: d3.HierarchyNode<MindMapNode>,
 		clipboardText: string
 	): boolean {
-		// 限制文本长度为最大允许长度
+		// Limit text length to maximum allowed length
 		const truncatedText = clipboardText.substring(0, VALIDATION_CONSTANTS.MAX_TEXT_LENGTH);
 
-		// 创建子节点
+		// Create child node
 		const childNode = this.mindMapService.createChildNode(node.data, truncatedText);
 
-		// 清除当前选择
+		// Clear current selection
 		this.callbacks.clearSelection?.();
 
-		// 修复：直接在数据层设置选中状态
+		// Fix: Set selected state directly at data layer
 		childNode.selected = true;
 
-		// 触发数据更新
+		// Trigger data update
 		this.callbacks.onDataUpdated?.();
 		return true;
 	}
 
 	/**
-	 * 显示成功提示
+	 * Show success notice
 	 */
 	private showSuccessNotice(message: string): void {
 		new Notice(message, 2000);
 	}
 
 	/**
-	 * 显示错误提示
+	 * Show error notice
 	 */
 	private showErrorNotice(message: string): void {
 		new Notice(message, 3000);

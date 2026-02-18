@@ -73,7 +73,7 @@ export function wrapText(text: string, maxWidth: number | null, fontSize: number
 /**
  * Measure text dimensions based on lines and font properties
  */
-export function measureTextSize(lines: string[], fontSize: number, fontWeight: string = 'normal'): {
+export function measureTextSize(lines: string[], fontSize: number): {
     width: number;
     height: number;
 } {
@@ -396,7 +396,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
     func: T,
     limit: number
 ): (...args: Parameters<T>) => void {
-    let inThrottle: boolean = false;
+    let inThrottle = false;
 
     return (...args: Parameters<T>) => {
         if (!inThrottle) {

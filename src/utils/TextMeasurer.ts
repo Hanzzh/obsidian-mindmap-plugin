@@ -1,4 +1,3 @@
-import { STYLE_CONSTANTS } from '../constants/mindmap-constants';
 import { getFontSizeByDepth } from '../constants/mindmap-constants';
 import { cleanTextContent } from './mindmap-utils';
 
@@ -11,7 +10,7 @@ function setCssProps(element: HTMLElement, props: Record<string, string>): void 
 }
 
 /**
- * 节点尺寸配置接口
+ * Node dimension configuration interface
  */
 export interface NodeDimensions {
 	width: number;
@@ -27,50 +26,50 @@ export interface NodeDimensions {
 }
 
 /**
- * 文本测量器
+ * Text measurer
  *
- * 【职责】
- * 精确测量文本尺寸、处理文字换行、计算节点尺寸
+ * [Responsibilities]
+ * Accurately measure text dimensions, handle text wrapping, calculate node dimensions
  *
- * 【核心功能】
- * 1. 精确文本测量：使用隐藏的 DOM 元素精确测量文本尺寸
- * 2. 智能文字换行：根据最大宽度自动换行或保持单行
- * 3. 节点尺寸计算：根据节点深度和文本内容计算完整的节点尺寸配置
- * 4. 缓存优化：缓存测量结果以提升性能
+ * [Core Functions]
+ * 1. Accurate text measurement: Use hidden DOM elements to accurately measure text dimensions
+ * 2. Smart text wrapping: Automatically wrap based on max width or keep single line
+ * 3. Node dimension calculation: Calculate complete node dimension configuration based on node depth and text content
+ * 4. Cache optimization: Cache measurement results to improve performance
  *
- * 【性能优化】
- * - textMeasurementCache: 文本测量结果缓存
- * - nodeDimensionsCache: 节点尺寸缓存
- * - 隐藏的 DOM 元素复用
+ * [Performance Optimization]
+ * - textMeasurementCache: Text measurement result cache
+ * - nodeDimensionsCache: Node dimension cache
+ * - Hidden DOM element reuse
  *
- * 【使用示例】
+ * [Usage Example]
  * ```typescript
  * const measurer = new TextMeasurer();
- * const dimensions = measurer.getNodeDimensions(0, "中心主题");
- * measurer.destroy(); // 使用完毕后清理
+ * const dimensions = measurer.getNodeDimensions(0, "Central Topic");
+ * measurer.destroy(); // Clean up after use
  * ```
  */
 export class TextMeasurer {
-	// 文本测量元素（隐藏的 DOM 元素，用于精确测量）
+	// Text measurement element (hidden DOM element for accurate measurement)
 	private textMeasurementElement: HTMLDivElement | null = null;
 
-	// 文本测量缓存
+	// Text measurement cache
 	private textMeasurementCache = new Map<string, { width: number; height: number }>();
 
-	// 节点尺寸缓存
+	// Node dimension cache
 	private nodeDimensionsCache = new Map<string, NodeDimensions>();
 
 	/**
-	 * 精确测量文本尺寸
+	 * Accurately measure text dimensions
 	 *
-	 * 使用隐藏的 DOM 元素精确测量文本的宽高，支持缓存
+	 * Use hidden DOM elements to accurately measure text width and height, with cache support
 	 *
-	 * @param text 要测量的文本
-	 * @param fontSize 字体大小（像素）
-	 * @param fontWeight 字体粗细（normal/bold等）
-	 * @returns 文本的宽高尺寸
+	 * @param text Text to measure
+	 * @param fontSize Font size (pixels)
+	 * @param fontWeight Font weight (normal/bold, etc.)
+	 * @returns Text width and height dimensions
 	 */
-	public measureTextAccurately(text: string, fontSize: number, fontWeight: string = 'normal'): { width: number; height: number } {
+	public measureTextAccurately(text: string, fontSize: number, fontWeight = 'normal') {
 		const cacheKey = `${text}-${fontSize}-${fontWeight}`;
 
 		if (this.textMeasurementCache.has(cacheKey)) {
@@ -99,7 +98,7 @@ export class TextMeasurer {
 			return result;
 		}
 
-		// 降级到估算方法
+		// Fallback to estimation method
 		const charWidth = fontSize * 0.62;
 		const lineHeight = fontSize * 1.2;
 		return {
@@ -109,21 +108,21 @@ export class TextMeasurer {
 	}
 
 	/**
-	 * 智能文字换行
+	 * Smart text wrapping
 	 *
-	 * 根据最大宽度自动换行，或者保持单行显示
+	 * Automatically wrap based on max width, or keep single line display
 	 *
-	 * @param text 原始文本
-	 * @param maxWidth 最大宽度（null表示不限制宽度）
-	 * @param fontSize 字体大小
-	 * @returns 换行后的文本数组
+	 * @param text Original text
+	 * @param maxWidth Maximum width (null means no width limit)
+	 * @param fontSize Font size
+	 * @returns Wrapped text array
 	 */
 	public wrapText(text: string, maxWidth: number | null, fontSize: number): string[] {
 		if (!text || text.length === 0) return [""];
 
-		// 如果maxWidth为null，表示允许单行显示，不进行自动换行
+		// If maxWidth is null, allow single line display, no auto wrapping
 		if (maxWidth === null) {
-			// 检查是否包含手动换行符
+			// Check if contains manual line breaks
 			if (text.includes('\n')) {
 				const lines = text.split('\n');
 				return lines;
@@ -131,8 +130,8 @@ export class TextMeasurer {
 			return [text];
 		}
 
-		// 简单的字符宽度估算（可以根据需要优化）
-		const charWidth = fontSize * 0.62; // 平衡的字符宽度估算
+		// Simple character width estimation (can be optimized as needed)
+		const charWidth = fontSize * 0.62; // Balanced character width estimation
 		const maxChars = Math.floor(maxWidth / charWidth);
 
 		if (text.length <= maxChars) {
@@ -163,25 +162,25 @@ export class TextMeasurer {
 	}
 
 	/**
-	 * 测量多行文本的尺寸（改进版）
+	 * Measure multi-line text dimensions (improved version)
 	 *
-	 * @param lines 文本行数组
-	 * @param fontSize 字体大小
-	 * @param fontWeight 字体粗细
-	 * @returns 文本的总宽高
+	 * @param lines Text line array
+	 * @param fontSize Font size
+	 * @param fontWeight Font weight
+	 * @returns Total text width and height
 	 */
-	public measureTextSize(lines: string[], fontSize: number, fontWeight: string = 'normal'): {
+	public measureTextSize(lines: string[], fontSize: number, fontWeight = 'normal'): {
 		width: number;
 		height: number;
 	} {
 		if (lines.length === 0) {
-			return { width: 40, height: fontSize * 1.3 }; // 降低最小宽度：60→40
+			return { width: 40, height: fontSize * 1.3 }; // Reduce minimum width: 60→40
 		}
 
-		const lineHeight = fontSize * 1.3; // 行高为字体大小的1.3倍（优化：1.5→1.3，节省13%）
+		const lineHeight = fontSize * 1.3; // Line height is 1.3x font size (optimization: 1.5→1.3, save 13%)
 		let maxWidth = 0;
 
-		// 使用精确测量方法
+		// Use accurate measurement method
 		for (const line of lines) {
 			const measurement = this.measureTextAccurately(line, fontSize, fontWeight);
 			if (measurement.width > maxWidth) {
@@ -190,7 +189,7 @@ export class TextMeasurer {
 		}
 
 		const height = lines.length * lineHeight;
-		const width = Math.max(maxWidth, 35); // 大幅降低最小宽度：60→35（约一个字符的宽度）
+		const width = Math.max(maxWidth, 35); // Significantly reduce minimum width: 60→35 (approximately one character width)
 
 		const result = { width: Math.ceil(width), height: Math.ceil(height) };
 
@@ -198,20 +197,20 @@ export class TextMeasurer {
 	}
 
 	/**
-	 * 获取节点尺寸配置（自适应版本）
+	 * Get node dimension configuration (adaptive version)
 	 *
-	 * 根据节点深度和文本内容，计算节点的完整尺寸配置
-	 * 包括宽度、高度、文本位置、字体样式等
+	 * Calculate complete node dimension configuration based on node depth and text content
+	 * Including width, height, text position, font style, etc.
 	 *
-	 * @param depth 节点深度（0=根节点，1=第一层，2+=其他层）
-	 * @param text 节点文本内容
-	 * @returns 节点尺寸配置对象
+	 * @param depth Node depth (0=root, 1=first level, 2+=other levels)
+	 * @param text Node text content
+	 * @returns Node dimension configuration object
 	 */
 	public getNodeDimensions(depth: number, text: string): NodeDimensions {
-		// 创建缓存键
+		// Create cache key
 		const cacheKey = `${depth}-${text}-${text.length}`;
 
-		// 检查缓存
+		// Check cache
 		if (this.nodeDimensionsCache.has(cacheKey)) {
 			const cached = this.nodeDimensionsCache.get(cacheKey);
 			if (cached) {
@@ -227,26 +226,26 @@ export class TextMeasurer {
 		let padding: number;
 
 		if (depth === 0) {
-			// 根节点：增强样式
+			// Root node: enhanced style
 			fontSize = getFontSizeByDepth(0);
 			fontWeight = "bold";
-			maxWidth = null; // 移除宽度限制，允许动态调整
-			minWidth = 40; // 大幅降低：70→40，允许单字符节点自适应（仅作为底线保护）
-			padding = 18; // 优化：24→18，减少25%
+			maxWidth = null; // Remove width limit, allow dynamic adjustment
+			minWidth = 40; // Significantly reduce: 70→40, allow single character node self-adaptation (only as baseline protection)
+			padding = 18; // Optimize: 24→18, reduce 25%
 		} else if (depth === 1) {
-			// 第1层：增强样式
+			// Level 1: enhanced style
 			fontSize = getFontSizeByDepth(1);
 			fontWeight = "bold";
-			maxWidth = null; // 移除宽度限制，允许动态调整
-			minWidth = 38; // 大幅降低：65→38，允许单字符节点自适应
-			padding = 16; // 优化：20→16，减少20%
+			maxWidth = null; // Remove width limit, allow dynamic adjustment
+			minWidth = 38; // Significantly reduce: 65→38, allow single character node self-adaptation
+			padding = 16; // Optimize: 20→16, reduce 20%
 		} else {
-			// 第2层及以后：更紧凑的样式
+			// Level 2 and beyond: more compact style
 			fontSize = getFontSizeByDepth(depth);
 			fontWeight = "normal";
-			maxWidth = null; // 移除宽度限制，允许动态调整
-			minWidth = 20; // 极限压缩：35→20，最大化紧凑度
-			padding = 10; // 优化：12→10，减少17%
+			maxWidth = null; // Remove width limit, allow dynamic adjustment
+			minWidth = 20; // Extreme compression: 35→20, maximize compactness
+			padding = 10; // Optimize: 12→10, reduce 17%
 		}
 
 		const fontSizeNum = parseInt(fontSize);
@@ -254,14 +253,14 @@ export class TextMeasurer {
 		const lines = this.wrapText(cleanedText, effectiveMaxWidth, fontSizeNum);
 		const textSize = this.measureTextSize(lines, fontSizeNum, fontWeight);
 
-		// 计算最终节点尺寸
-		const safetyBuffer = Math.max(8, textSize.width * 0.05); // 至少8px或5%缓冲
+		// Calculate final node dimensions
+		const safetyBuffer = Math.max(8, textSize.width * 0.05); // At least 8px or 5% buffer
 		const width = Math.max(textSize.width + padding * 2 + safetyBuffer, minWidth);
-		const height = Math.max(textSize.height + padding * 2, fontSizeNum * 2.0); // 最小高度为字体大小的2.0倍（优化：2.5→2.0，节省20%）
+		const height = Math.max(textSize.height + padding * 2, fontSizeNum * 2.0); // Minimum height is 2.0x font size (optimization: 2.5→2.0, save 20%)
 
-		// 计算文字位置（居中对齐）
+		// Calculate text position (center aligned)
 		const textX = width / 2;
-		const textY = textSize.height / 2 + padding / 2; // 修复垂直居中 // 微调Y位置
+		const textY = textSize.height / 2 + padding / 2; // Fix vertical centering // Fine-tune Y position
 
 		const result: NodeDimensions = {
 			width,
@@ -276,18 +275,18 @@ export class TextMeasurer {
 			maxWidth
 		};
 
-		// 缓存计算结果
+		// Cache calculation result
 		this.nodeDimensionsCache.set(cacheKey, result);
 
 		return result;
 	}
 
 	/**
-	 * 清除特定文本的缓存
+	 * Clear cache for specific text
 	 *
-	 * 当文本内容修改时，清除相关的缓存以避免使用过时的数据
+	 * Clear related cache when text content is modified to avoid using stale data
 	 *
-	 * @param text 要清除缓存的文本
+	 * @param text Text to clear cache for
 	 */
 	public clearNodeDimensionsCacheForText(text: string): void {
 		const keysToDelete: string[] = [];
@@ -309,9 +308,9 @@ export class TextMeasurer {
 	}
 
 	/**
-	 * 初始化文本测量元素（私有方法）
+	 * Initialize text measurement element (private method)
 	 *
-	 * 创建一个隐藏的 DOM 元素用于精确测量文本尺寸
+	 * Create a hidden DOM element for accurately measuring text dimensions
 	 */
 	private initializeTextMeasurementElement(): void {
 		if (!this.textMeasurementElement) {
@@ -322,18 +321,18 @@ export class TextMeasurer {
 	}
 
 	/**
-	 * 销毁测量器，清理资源
+	 * Destroy measurer, clean up resources
 	 *
-	 * 清理隐藏的 DOM 元素和所有缓存
+	 * Clean up hidden DOM elements and all caches
 	 */
 	public destroy(): void {
-		// 清理文本测量元素
+		// Clean up text measurement element
 		if (this.textMeasurementElement && this.textMeasurementElement.parentNode) {
 			this.textMeasurementElement.parentNode.removeChild(this.textMeasurementElement);
 			this.textMeasurementElement = null;
 		}
 
-		// 清理缓存
+		// Clean up caches
 		this.textMeasurementCache.clear();
 		this.nodeDimensionsCache.clear();
 	}

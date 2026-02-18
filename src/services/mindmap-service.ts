@@ -148,7 +148,7 @@ export class MindMapService {
     /**
      * Create a new child node for the given parent node
      */
-    createChildNode(parentNode: MindMapNode, childText: string = "New Node"): MindMapNode {
+    createChildNode(parentNode: MindMapNode, childText = "New Node"): MindMapNode {
         const childNode: MindMapNode = {
             text: childText,
             level: parentNode.level + 1,
@@ -167,7 +167,7 @@ export class MindMapService {
      * Create a new sibling node after the given node
      * (at the same level, with the same parent)
      */
-    createSiblingNode(afterNode: MindMapNode, siblingText: string = "New Node"): MindMapNode | null {
+    createSiblingNode(afterNode: MindMapNode, siblingText = "New Node"): MindMapNode | null {
         // Cannot create sibling for root node
         if (!afterNode.parent) {
             return null;

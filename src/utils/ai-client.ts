@@ -136,7 +136,7 @@ export class AIClient {
 
 		const apiUrl = `${this.config.apiBaseUrl}/chat/completions`;
 
-		const messages: Array<{role: string; content: string}> = [];
+		const messages: {role: string; content: string}[] = [];
 
 		if (systemMessage) {
 			messages.push({ role: 'system', content: systemMessage });
@@ -271,7 +271,7 @@ export class AIClient {
 					!line.match(/^[0-9]+\./) // Remove numbered list items
 				)
 				.map(line => line.replace(/^[-*•]\s*/, '')); // Remove bullet points
-		} catch (error) {
+		} catch {
 			return [];
 		}
 	}
@@ -350,12 +350,12 @@ export class AIClient {
 	 * @throws Error if response structure is invalid or content is empty
 	 */
 	private validateAPIResponseStructure(data: {
-		choices?: Array<{
+		choices?: {
 			message?: { content?: string; reasoning_content?: string };
 			finish_reason?: string;
-		}>;
+		}[];
 		usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-	}, context: string): string {
+	}, _context: string): string {
 
 		// Check if data exists
 		if (!data) {

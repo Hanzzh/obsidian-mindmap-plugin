@@ -37,7 +37,12 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
     private messages: MindMapMessages;
     private config?: MindMapConfig;
 
-    constructor(private callbacks: InteractionCallbacks = {}, messages?: MindMapMessages, config?: MindMapConfig) {
+     
+    constructor(
+		private callbacks: InteractionCallbacks = {},
+		private messages?: MindMapMessages,
+		private config?: MindMapConfig
+	) {
         this.messages = messages || { errors: {}, notices: {}, ui: {}, validation: {} } as MindMapMessages;
         this.config = config;
     }

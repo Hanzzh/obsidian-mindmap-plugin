@@ -65,7 +65,7 @@ export class CoordinateConverter {
 	 * // 返回: 200 (直接映射)
 	 * ```
 	 */
-	static toCanvasX(layoutY: number, offsetX: number = 0): number {
+	static toCanvasX(layoutY: number, offsetX = 0): number {
 		return layoutY + offsetX;
 	}
 
@@ -93,7 +93,7 @@ export class CoordinateConverter {
 	 * // 解释: 节点中心在100，高度50，顶边应该在75
 	 * ```
 	 */
-	static toCanvasY(layoutX: number, nodeHeight: number, offsetY: number = 0): number {
+	static toCanvasY(layoutX: number, nodeHeight: number, offsetY = 0): number {
 		return layoutX + offsetY - nodeHeight / 2;
 	}
 
@@ -115,7 +115,7 @@ export class CoordinateConverter {
 	 * // 返回: 100 (75 + 50/2)
 	 * ```
 	 */
-	static toLayoutX(canvasY: number, nodeHeight: number, offsetY: number = 0): number {
+	static toLayoutX(canvasY: number, nodeHeight: number, offsetY = 0): number {
 		return canvasY - offsetY + nodeHeight / 2;
 	}
 
@@ -143,7 +143,7 @@ export class CoordinateConverter {
 		nodeWidth: number,
 		padding: number,
 		lineOffset: number,
-		offsetX: number = 0
+		offsetX = 0
 	): number {
 		return layoutY + nodeWidth - padding + lineOffset + offsetX;
 	}
@@ -170,7 +170,7 @@ export class CoordinateConverter {
 		layoutY: number,
 		padding: number,
 		lineOffset: number,
-		offsetX: number = 0
+		offsetX = 0
 	): number {
 		return layoutY + padding - lineOffset + offsetX;
 	}
@@ -271,7 +271,7 @@ export class CoordinateConverter {
 		height1: number,
 		layoutX2: number,
 		height2: number,
-		gap: number = 0
+		gap = 0
 	): boolean {
 		// 计算每个节点的上下边界
 		const top1 = layoutX1 - height1 / 2;
@@ -309,8 +309,8 @@ export class CoordinateConverter {
 		layoutY: number,
 		nodeWidth: number,
 		nodeHeight: number,
-		offsetX: number = 0,
-		offsetY: number = 0
+		offsetX = 0,
+		offsetY = 0
 	): string {
 		const canvasX = this.toCanvasX(layoutY, offsetX);
 		const canvasY = this.toCanvasY(layoutX, nodeHeight, offsetY);

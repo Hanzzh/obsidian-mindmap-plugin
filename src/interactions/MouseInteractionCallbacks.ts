@@ -7,6 +7,7 @@ import { MindMapNode } from '../interfaces/mindmap-interfaces';
  * 用于解耦 MouseInteraction 和 D3TreeRenderer 之间的依赖关系
  * MouseInteraction 通过这些回调与外部通信，而不直接依赖 D3TreeRenderer
  */
+ 
 export interface MouseInteractionCallbacks {
 	/**
 	 * 节点被选中时调用（单击）
@@ -69,6 +70,7 @@ export interface MouseInteractionCallbacks {
 	 */
 	onCanvasInteractionChanged?: (enabled: boolean) => void;
 }
+ 
 
 /**
  * MouseInteraction 的配置选项

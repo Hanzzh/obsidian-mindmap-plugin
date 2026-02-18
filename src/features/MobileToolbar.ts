@@ -1,25 +1,25 @@
 /**
- * Mobile Toolbar - 移动端工具栏功能
+ * Mobile Toolbar - Mobile toolbar functionality
  *
- * 【职责】
- * - 创建和管理共享工具栏（编辑、复制、粘贴、删除）
- * - 更新工具栏位置和显示状态
- * - 处理工具栏按钮点击事件
- * - 提供震动反馈（移动端）
+ * [Responsibilities]
+ * - Create and manage shared toolbar (edit, copy, paste, delete)
+ * - Update toolbar position and display state
+ * - Handle toolbar button click events
+ * - Provide vibration feedback (mobile)
  *
- * 【设计原则】
- * - 通过回调与外部通信，不直接依赖 D3TreeRenderer
- * - 管理工具栏的显示、隐藏和位置更新
- * - 提供清晰的 API 用于工具栏操作
+ * [Design Principles]
+ * - Communicate with external via callbacks, no direct dependency on D3TreeRenderer
+ * - Manage toolbar display, hide and position updates
+ * - Provide clear API for toolbar operations
  *
- * 【重构来源】
- * 从 D3TreeRenderer.ts 提取（Phase 3.5）
+ * [Refactoring Source]
+ * Extracted from D3TreeRenderer.ts (Phase 3.5)
  * - createToolbarContent() → create()
- * - createToolbarButton() → (内部方法)
+ * - createToolbarButton() → (internal method)
  * - updateSharedToolbar() → updatePosition()
  * - hideSharedToolbar() → hide()
  * - attachToolbarButtonHandlers() → attachHandlers()
- * - handleToolbar*Click() → (通过回调处理)
+ * - handleToolbar*Click() → (handled via callbacks)
  */
 
 import * as d3 from 'd3';
@@ -28,34 +28,34 @@ import { TextMeasurer } from '../utils/TextMeasurer';
 import { MindMapMessages } from '../i18n';
 
 /**
- * Mobile Toolbar 回调接口
+ * Mobile Toolbar callback interface
  */
 export interface MobileToolbarCallbacks {
 	/**
-	 * 编辑按钮点击时调用
+	 * Called when edit button is clicked
 	 */
 	onEdit?: (node: d3.HierarchyNode<MindMapNode>) => void;
 
 	/**
-	 * 复制按钮点击时调用
+	 * Called when copy button is clicked
 	 */
 	onCopy?: (node: d3.HierarchyNode<MindMapNode>) => Promise<void>;
 
 	/**
-	 * 粘贴按钮点击时调用
+	 * Called when paste button is clicked
 	 */
 	onPaste?: (node: d3.HierarchyNode<MindMapNode>) => Promise<void>;
 
 	/**
-	 * 删除按钮点击时调用
+	 * Called when delete button is clicked
 	 */
  onDelete?: (node: d3.HierarchyNode<MindMapNode>) => void;
 }
 
 /**
- * Mobile Toolbar 类
+ * Mobile Toolbar class
  *
- * 管理移动端工具栏的完整生命周期
+ * Manages complete lifecycle of mobile toolbar
  */
 export class MobileToolbar {
 	private toolbar: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
@@ -65,21 +65,23 @@ export class MobileToolbar {
 		private textMeasurer: TextMeasurer,
 		private messages: MindMapMessages,
 		private callbacks: MobileToolbarCallbacks = {}
-	) {}
+	) {
+		// Instance variables are used in class methods
+	}
 
 	/**
-	 * 创建共享工具栏
+	 * Create shared toolbar
 	 *
-	 * @param svg SVG 选择集
+	 * @param svg SVG selection set
 	 */
 	create(svg: d3.Selection<SVGSVGElement, unknown, null, undefined>): void {
-		// 🔧 简化：如果已存在，先销毁再创建（确保唯一性和有效性）
+		// Simplification: if exists, destroy and recreate (ensure uniqueness and validity)
 		if (this.toolbar) {
 			this.toolbar.remove();
 			this.toolbar = null;
 		}
 
-		// 🔧 修复：创建在 content 组内，确保在正确的SVG层级（参照重构前实现）
+		// Fix: create in content group, ensure correct SVG level (refer to pre-refactoring implementation)
 		const content = svg.select(".mindmap-content");
 		if (content.empty()) {
 			return;
@@ -89,19 +91,19 @@ export class MobileToolbar {
 			.attr("class", "shared-node-toolbar")
 			.style("display", "none");
 
-		// 创建工具栏内容
+		// Create toolbar content
 		this.createToolbarContent(toolbarGroup);
 
-		// 保存引用
+		// Save reference
 		this.toolbar = toolbarGroup;
 	}
 
 	/**
-	 * 更新工具栏位置和显示状态
+	 * Update toolbar position and display state
 	 *
-	 * @param node 关联的节点
-	 * @param offsetX X轴偏移量
-	 * @param offsetY Y轴偏移量
+	 * @param node Associated node
+	 * @param offsetX X-axis offset
+	 * @param offsetY Y-axis offset
 	 */
 	updatePosition(
 		node: d3.HierarchyNode<MindMapNode>,
@@ -112,40 +114,40 @@ export class MobileToolbar {
 			return;
 		}
 
-		// 获取节点尺寸
+		// Get node dimensions
 		const dimensions = this.textMeasurer.getNodeDimensions(node.depth, node.data.text);
 
-		// 计算工具栏绝对位置（使用画布坐标）
-		const nodeCanvasX = node.y + offsetX;  // 节点的水平位置
-		// node.x 是布局坐标的中心点，需要转换为画布坐标的顶边位置
-		const nodeCanvasY = node.x + offsetY - dimensions.height / 2;  // 节点的垂直位置（顶边）
+		// Calculate toolbar absolute position (using canvas coordinates)
+		const nodeCanvasX = node.y + offsetX;  // Node's horizontal position
+		// node.x is the center point of layout coordinates, need to convert to top edge position of canvas coordinates
+		const nodeCanvasY = node.x + offsetY - dimensions.height / 2;  // Node's vertical position (top edge)
 
 		const toolbarWidth = 320;
 		const toolbarHeight = 44;
 
-		// 工具栏相对于节点的偏移
-		const toolbarOffsetX = (dimensions.width - toolbarWidth) / 2;  // 水平居中
-		const toolbarOffsetY = -toolbarHeight - 12;  // 节点上方12px
+		// Toolbar offset relative to node
+		const toolbarOffsetX = (dimensions.width - toolbarWidth) / 2;  // Horizontal center
+		const toolbarOffsetY = -toolbarHeight - 12;  // 12px above node
 
-		// 工具栏的绝对坐标
+		// Toolbar's absolute coordinates
 		const toolbarX = nodeCanvasX + toolbarOffsetX;
 		const toolbarY = nodeCanvasY + toolbarOffsetY;
 
-		// 更新工具栏位置
-		// 中断任何正在进行的过渡动画，确保工具栏立即响应
+		// Update toolbar position
+		// Interrupt any ongoing transition animation, ensure toolbar responds immediately
 		this.toolbar
 			.interrupt()
 			.attr("transform", `translate(${toolbarX}, ${toolbarY})`)
 			.style("display", "block")
 			.style("opacity", 0);
 
-		// 保存当前关联的节点
+		// Save currently associated node
 		this.currentNode = node;
 
-		// 更新按钮事件监听器（使用新的节点引用）
+		// Update button event listeners (using new node reference)
 		this.attachHandlers(node);
 
-		// 平滑淡入动画
+		// Smooth fade-in animation
 		requestAnimationFrame(() => {
 			if (this.toolbar) {
 				this.toolbar
@@ -156,7 +158,7 @@ export class MobileToolbar {
 	}
 
 	/**
-	 * 隐藏工具栏
+	 * Hide toolbar
 	 */
 	hide(): void {
 		if (!this.toolbar) {
@@ -169,13 +171,13 @@ export class MobileToolbar {
 			.duration(150)
 			.on("end", () => {
 				this.toolbar?.style("display", "none");
-				// 只在动画完成后清除节点引用
+				// Clear node reference only after animation completes
 				this.currentNode = null;
 			});
 	}
 
 	/**
-	 * 销毁
+	 * Destroy
 	 */
 	destroy(): void {
 		if (this.toolbar) {
@@ -185,10 +187,10 @@ export class MobileToolbar {
 		this.currentNode = null;
 	}
 
-	// ========== 私有方法 ==========
+	// ========== Private Methods ==========
 
 	/**
-	 * 创建工具栏内容
+	 * Create toolbar content
 	 */
 	private createToolbarContent(
 		toolbarGroup: d3.Selection<SVGGElement, unknown, null, undefined>
@@ -196,7 +198,7 @@ export class MobileToolbar {
 		const toolbarWidth = 400;
 		const toolbarHeight = 44;
 
-		// 工具栏背景（黑色圆角矩形）
+		// Toolbar background (black rounded rectangle)
 		toolbarGroup.append("rect")
 			.attr("class", "toolbar-bg")
 			.attr("width", toolbarWidth)
@@ -205,13 +207,13 @@ export class MobileToolbar {
 			.attr("ry", 8)
 			.attr("fill", "#000000");
 
-		// 工具栏箭头（指向节点）
+		// Toolbar arrow (pointing to node)
 		toolbarGroup.append("path")
 			.attr("class", "toolbar-arrow")
 			.attr("d", "M 200 52 L 192 44 L 208 44 Z")
 			.attr("fill", "#000000");
 
-		// 三条分隔线
+		// Three separator lines
 		for (let i = 1; i <= 3; i++) {
 			toolbarGroup.append("line")
 				.attr("class", "toolbar-separator")
@@ -223,7 +225,7 @@ export class MobileToolbar {
 				.attr("stroke-width", 1);
 		}
 
-		// 创建四个按钮
+		// Create four buttons
 		this.createToolbarButton(toolbarGroup, 0, toolbarWidth, toolbarHeight, "edit");
 		this.createToolbarButton(toolbarGroup, 1, toolbarWidth, toolbarHeight, "copy");
 		this.createToolbarButton(toolbarGroup, 2, toolbarWidth, toolbarHeight, "paste");
@@ -231,7 +233,7 @@ export class MobileToolbar {
 	}
 
 	/**
-	 * 创建工具栏按钮
+	 * Create toolbar button
 	 */
 	private createToolbarButton(
 		toolbarGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -286,30 +288,30 @@ export class MobileToolbar {
 	}
 
 	/**
-	 * 附加工具栏按钮事件处理器
+	 * Attach toolbar button event handlers
 	 */
 	private attachHandlers(node: d3.HierarchyNode<MindMapNode>): void {
 		if (!this.toolbar) return;
 
-		// 编辑按钮
+		// Edit button
 		this.toolbar.select(".edit-btn")
 			.on("click", (event: MouseEvent) => {
 				this.handleButtonClick(event, node, "edit");
 			});
 
-		// 复制按钮
+		// Copy button
 		this.toolbar.select(".copy-btn")
 			.on("click", (event: MouseEvent) => {
 				this.handleButtonClick(event, node, "copy");
 			});
 
-		// 粘贴按钮
+		// Paste button
 		this.toolbar.select(".paste-btn")
 			.on("click", (event: MouseEvent) => {
 				this.handleButtonClick(event, node, "paste");
 			});
 
-		// 删除按钮
+		// Delete button
 		this.toolbar.select(".delete-btn")
 			.on("click", (event: MouseEvent) => {
 				this.handleButtonClick(event, node, "delete");
@@ -317,21 +319,21 @@ export class MobileToolbar {
 	}
 
 	/**
-	 * 处理工具栏按钮点击事件
+	 * Handle toolbar button click event
 	 */
 	private handleButtonClick(
 		event: MouseEvent,
 		node: d3.HierarchyNode<MindMapNode>,
 		type: string
 	): void {
-		event.stopPropagation(); // 阻止事件冒泡
+		event.stopPropagation(); // Prevent event bubbling
 
-		// 震动反馈（如果设备支持）
+		// Vibration feedback (if device supports)
 		if (navigator.vibrate) {
 			navigator.vibrate(50);
 		}
 
-		// 触发相应的回调
+		// Trigger corresponding callback
 		switch (type) {
 			case "edit":
 				this.callbacks.onEdit?.(node);

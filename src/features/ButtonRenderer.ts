@@ -1,33 +1,31 @@
 /**
- * Button Renderer - 按钮渲染功能
+ * Button Renderer - Button rendering functionality
  *
- * 【职责】
- * - 渲染+号按钮（添加子节点）
- * - 移除按钮
- * - 批量渲染按钮
- * - 处理按钮点击事件
+ * [Responsibilities]
+ * - Render plus button (add child node)
+ * - Remove button
+ * - Batch render buttons
+ * - Handle button click events
  *
- * 【设计原则】
- * - 通过回调与外部通信，不直接依赖 D3TreeRenderer
- * - 管理按钮的渲染和移除
- * - 提供清晰的 API 用于按钮操作
+ * [Design Principles]
+ * - Communicate with external via callbacks, no direct dependency on D3TreeRenderer
+ * - Manage button rendering and removal
+ * - Provide clear API for button operations
  *
- * 【重构来源】
- * 从 D3TreeRenderer.ts 提取（Phase 3.4）
+ * [Refactoring Source]
+ * Extracted from D3TreeRenderer.ts (Phase 3.4)
  * - renderPlusButtons() → renderButtons()
  * - renderPlusButton() → renderPlusButton()
  * - removePlusButton() → removePlusButton()
- * - handlePlusButtonClick() → (通过回调处理)
- * - editNewNode() → (通过回调触发)
+ * - handlePlusButtonClick() → (handled via callbacks)
+ * - editNewNode() → (triggered via callbacks)
  */
 
 import * as d3 from 'd3';
 import { MindMapNode } from '../interfaces/mindmap-interfaces';
-import { MindMapService } from '../services/mindmap-service';
-import { TextMeasurer } from '../utils/TextMeasurer';
 
 /**
- * 节点尺寸接口
+ * Node dimensions interface
  */
 export interface NodeDimensions {
 	width: number;
@@ -35,56 +33,55 @@ export interface NodeDimensions {
 }
 
 /**
- * Button Renderer 回调接口
+ * Button Renderer callback interface
  */
 export interface ButtonRendererCallbacks {
 	/**
-	 * 添加子节点时调用（会触发快照保存）
+	 * Called when adding child node (will trigger snapshot save)
 	 */
-	onAddChildNode?: (node: d3.HierarchyNode<MindMapNode>) => void;
+	onAddChildNode?: (_node: d3.HierarchyNode<MindMapNode>) => void;
 
 	/**
-	 * 按钮点击后需要进入编辑模式时调用
+	 * Called when button click requires entering edit mode
 	 */
-	enterEditMode?: (node: d3.HierarchyNode<MindMapNode>) => void;
+	enterEditMode?: (_node: d3.HierarchyNode<MindMapNode>) => void;
 
 	/**
-	 * 按钮点击后需要清除选择时调用
+	 * Called when button click requires clearing selection
 	 */
 	clearSelection?: () => void;
 
 	/**
-	 * 按钮点击后需要选中节点时调用
+	 * Called when button click requires selecting node
 	 */
-	selectNode?: (node: d3.HierarchyNode<MindMapNode>) => void;
+	selectNode?: (_node: d3.HierarchyNode<MindMapNode>) => void;
 
 	/**
-	 * 按钮点击后需要刷新数据时调用
+	 * Called when button click requires refreshing data
 	 */
 	onDataUpdated?: () => void;
 }
 
 /**
- * Button Renderer 类
+ * Button Renderer class
  *
- * 管理按钮的渲染和交互
+ * Manages button rendering and interaction
  */
 export class ButtonRenderer {
-	constructor(
-		private mindMapService: MindMapService,
-		private textMeasurer: TextMeasurer,
-		private callbacks: ButtonRendererCallbacks = {}
-	) {}
+
+	constructor() {
+		// Instance variables are used in class methods
+	}
 
 	/**
-	 * 批量渲染+号按钮（只为选中的节点渲染）
+	 * Batch render plus buttons (only for selected nodes)
 	 *
-	 * @param nodeElements D3 节点选择集
+	 * @param nodeElements D3 node selection set
 	 */
 	renderButtons(
 		nodeElements: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>
 	): void {
-		// 为每个节点添加+号按钮
+		// Add plus button for each node
 		const nodes = nodeElements.nodes();
 		const data = nodeElements.data();
 
@@ -94,7 +91,7 @@ export class ButtonRenderer {
 			const nodeElement = d3.select(node);
 			const dimensions = this.textMeasurer.getNodeDimensions(d.depth, d.data.text);
 
-			// 只为选中的节点渲染+号按钮
+			// Only render plus button for selected nodes
 			if (d.data.selected) {
 				this.renderPlusButton(nodeElement as d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>, d, dimensions);
 			}
@@ -102,66 +99,66 @@ export class ButtonRenderer {
 	}
 
 	/**
-	 * 渲染单个节点的+号按钮
+	 * Render plus button for a single node
 	 *
-	 * @param nodeElement 节点元素选择集
-	 * @param node 节点数据
-	 * @param dimensions 节点尺寸
+	 * @param nodeElement Node element selection set
+	 * @param node Node data
+	 * @param dimensions Node dimensions
 	 */
 	renderPlusButton(
 		nodeElement: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>,
 		node: d3.HierarchyNode<MindMapNode>,
 		dimensions: NodeDimensions
 	): void {
-		// 检查是否已经存在+号按钮
+		// Check if plus button already exists
 		const existingButton = nodeElement.select(".plus-button-group");
 		if (!existingButton.empty()) {
-			return; // 已存在则不重复创建
+			return; // Don't create duplicate if already exists
 		}
 
-		// 计算两个按钮的总高度（+号按钮20px + 间距10px + AI按钮20px = 50px）
+		// Calculate total height of both buttons (plus button 20px + spacing 10px + AI button 20px = 50px)
 		const totalButtonsHeight = 20 + 10 + 20;
-		// +号按钮位于上方位置
+		// Plus button positioned at the top
 		const buttonY = (dimensions.height - totalButtonsHeight) / 2;
 
-		// 创建+号按钮组
+		// Create plus button group
 		const buttonGroup = nodeElement.append("g")
 			.attr("class", "plus-button-group")
 			.attr("transform", `translate(${dimensions.width + 4}, ${buttonY})`);
 
-		// 添加点击事件处理器
+		// Add click event handler
 		buttonGroup.on("click", (event: MouseEvent) => {
 			this.handleButtonClick(event, node);
 		});
 
-		// 创建圆形背景
+		// Create circular background
 		buttonGroup.append("circle")
 			.attr("class", "plus-button-bg")
 			.attr("cx", 10)
 			.attr("cy", 10)
 			.attr("r", 10)
-			.attr("fill", "#2972f4")  // 蓝色背景
+			.attr("fill", "#2972f4")  // Blue background
 			.style("opacity", 0.9)
 			.style("cursor", "pointer");
 
-		// 创建+号文本 - 修复居中对齐
+		// Create plus text - fix center alignment
 		buttonGroup.append("text")
 			.attr("class", "plus-button-text")
-			.attr("x", 10)              // 与圆形cx对齐
-			.attr("y", 10)              // 与圆形cy对齐
+			.attr("x", 10)              // Align with circle cx
+			.attr("y", 10)              // Align with circle cy
 			.attr("text-anchor", "middle")
 			.attr("dominant-baseline", "middle")
 			.attr("fill", "white")
 			.attr("font-size", "16px")
 			.attr("font-weight", "bold")
-			.style("pointer-events", "none")  // 阻止文本事件，让圆形背景接收事件
+			.style("pointer-events", "none")  // Block text events, let circular background receive events
 			.text("+");
 	}
 
 	/**
-	 * 移除节点的+号按钮
+	 * Remove plus button from node
 	 *
-	 * @param nodeElement 节点元素选择集
+	 * @param nodeElement Node element selection set
 	 */
 	removePlusButton(
 		nodeElement: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>
@@ -173,21 +170,21 @@ export class ButtonRenderer {
 	}
 
 	/**
-	 * 销毁
+	 * Destroy
 	 */
 	destroy(): void {
-		// 清理资源（如果需要）
+		// Clean up resources (if needed)
 	}
 
-	// ========== 私有方法 ==========
+	// ========== Private Methods ==========
 
 	/**
-	 * 处理+号按钮点击事件
+	 * Handle plus button click event
 	 */
 	private handleButtonClick(event: MouseEvent, node: d3.HierarchyNode<MindMapNode>): void {
-		event.stopPropagation(); // 阻止事件冒泡到节点
+		event.stopPropagation(); // Prevent event bubbling to node
 
-		// 使用回调添加子节点（会触发快照保存）
+		// Use callback to add child node (will trigger snapshot save)
 		this.callbacks.onAddChildNode?.(node);
 	}
 }

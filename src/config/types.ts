@@ -15,33 +15,33 @@ import { SupportedLanguage } from '../i18n/types';
  */
 export interface LayoutConfig {
     // Spacing constants
-    minNodeGap: number;                    // 最小节点间距
-    horizontalSpacing: number;             // 水平基础间距
-    verticalSpacing: number;               // 垂直基础间距
-    minVerticalGap: number;                // 最小垂直间距
+    minNodeGap: number;                    // Minimum node gap
+    horizontalSpacing: number;             // Horizontal base spacing
+    verticalSpacing: number;               // Vertical base spacing
+    minVerticalGap: number;                // Minimum vertical gap
 
     // Adaptive horizontal spacing configuration
     adaptiveHorizontalSpacing: {
-        minSpacing: number;                // 最小水平间距（防止重叠）
-        maxSpacing: number;                // 最大水平间距（避免过度分散）
-        sourceNodeRatio: number;           // 基于源节点宽度的比例
-        targetNodeRatio: number;           // 基于目标节点宽度的比例
-        baseSpacing: number;               // 基础间距
-        safetyMargin: number;              // 安全边距
+        minSpacing: number;                // Minimum horizontal spacing (prevent overlap)
+        maxSpacing: number;                // Maximum horizontal spacing (avoid excessive spread)
+        sourceNodeRatio: number;           // Ratio based on source node width
+        targetNodeRatio: number;           // Ratio based on target node width
+        baseSpacing: number;               // Base spacing
+        safetyMargin: number;              // Safety margin
     };
 
     // Canvas dimensions
-    treeHeight: number;                    // 树高度
-    treeWidth: number;                     // 树宽度
-    canvasWidth: number;                   // 画布宽度
-    canvasHeight: number;                  // 画布高度
+    treeHeight: number;                    // Tree height
+    treeWidth: number;                     // Tree width
+    canvasWidth: number;                   // Canvas width
+    canvasHeight: number;                  // Canvas height
 
     // Node spacing
-    nodeHeightBuffer: number;              // 节点高度缓冲
+    nodeHeightBuffer: number;              // Node height buffer
 
     // Centering calculations
-    centerOffsetX: number;                 // 水平居中偏移
-    centerOffsetY: number;                 // 垂直居中偏移
+    centerOffsetX: number;                 // Horizontal center offset
+    centerOffsetY: number;                 // Vertical center offset
 }
 
 /**
@@ -49,23 +49,23 @@ export interface LayoutConfig {
  */
 export interface StyleConfig {
     // Font sizes by node level
-    rootFontSize: string;                  // 根节点字体大小
-    level1FontSize: string;                // 一级节点字体大小
-    defaultFontSize: string;               // 默认字体大小
+    rootFontSize: string;                  // Root node font size
+    level1FontSize: string;                // Level 1 node font size
+    defaultFontSize: string;               // Default font size
 
     // Additional font sizes for UI components
-    textMeasurementFontSize: string;       // 文本测量字体大小
-    interactionUiFontSize: string;         // 交互UI字体大小
+    textMeasurementFontSize: string;       // Text measurement font size
+    interactionUiFontSize: string;         // Interaction UI font size
 
     // Node dimensions
-    rootNodeMinWidth: number;              // 根节点最小宽度
-    nodeMinWidth: number;                  // 普通节点最小宽度
+    rootNodeMinWidth: number;              // Root node minimum width
+    nodeMinWidth: number;                  // Regular node minimum width
 
     // Text calculations
-    charWidthRatio: number;                // 字符宽度比例
+    charWidthRatio: number;                // Character width ratio
 
     // Timing constants
-    renderFrameDelay: number;              // 渲染帧延迟（约一帧的时间）
+    renderFrameDelay: number;              // Render frame delay (approximately one frame)
 }
 
 /**
@@ -73,17 +73,17 @@ export interface StyleConfig {
  */
 export interface ColorConfig {
     // Default node colors by level
-    root_node_color: string;               // 根节点颜色
-    level_1_color: string;                 // 一级节点颜色
-    default_node_color: string;            // 默认节点颜色
+    root_node_color: string;               // Root node color
+    level_1_color: string;                 // Level 1 node color
+    default_node_color: string;            // Default node color
 
     // Selection colors
-    selected_node_color: string;           // 选中节点颜色
-    hover_node_color: string;              // 悬停节点颜色
+    selected_node_color: string;           // Selected node color
+    hover_node_color: string;              // Hover node color
 
     // Link colors
-    link_color: string;                    // 连接线颜色
-    link_width: number;                    // 连接线宽度
+    link_color: string;                    // Connection line color
+    link_width: number;                    // Connection line width
 }
 
 /**
@@ -91,13 +91,13 @@ export interface ColorConfig {
  */
 export interface AnimationConfig {
     // Transition durations (in milliseconds)
-    fastTransition: number;                // 快速过渡
-    normalTransition: number;              // 正常过渡
-    slowTransition: number;                // 慢速过渡
+    fastTransition: number;                // Fast transition
+    normalTransition: number;              // Normal transition
+    slowTransition: number;                // Slow transition
 
     // Easing functions
-    easingDefault: string;                 // 默认缓动函数
-    easingElastic: string;                 // 弹性缓动
+    easingDefault: string;                 // Default easing function
+    easingElastic: string;                 // Elastic easing
 }
 
 /**
@@ -105,15 +105,15 @@ export interface AnimationConfig {
  */
 export interface PerformanceConfig {
     // Rendering thresholds
-    maxNodesBeforeVirtualization: number;  // 虚拟化阈值
+    maxNodesBeforeVirtualization: number;  // Virtualization threshold
 
     // Debounce delays (in milliseconds)
-    renderDebounceDelay: number;           // 渲染防抖延迟
-    inputDebounceDelay: number;            // 输入防抖延迟
+    renderDebounceDelay: number;           // Render debounce delay
+    inputDebounceDelay: number;            // Input debounce delay
 
     // Cache settings
-    maxCacheSize: number;                  // 最大缓存大小
-    cacheExpiryTime: number;               // 缓存过期时间（5分钟）
+    maxCacheSize: number;                  // Maximum cache size
+    cacheExpiryTime: number;               // Cache expiry time (5 minutes)
 }
 
 /**
@@ -121,15 +121,15 @@ export interface PerformanceConfig {
  */
 export interface InteractionConfig {
     // Enable/disable features
-    enableDrag: boolean;                   // 启用拖拽
-    enableZoom: boolean;                   // 启用缩放
+    enableDrag: boolean;                   // Enable drag
+    enableZoom: boolean;                   // Enable zoom
 
     // Zoom configuration
-    zoomScaleExtent: [number, number];     // 缩放范围 [最小, 最大]
+    zoomScaleExtent: [number, number];     // Zoom range [min, max]
 
     // Touch configuration (mobile-specific)
-    touchTargetSize?: number;              // 触摸目标最小尺寸 (px)
-    enableTouchGestures?: boolean;         // 启用触摸手势
+    touchTargetSize?: number;              // Touch target minimum size (px)
+    enableTouchGestures?: boolean;         // Enable touch gestures
 }
 
 /**
@@ -137,8 +137,8 @@ export interface InteractionConfig {
  */
 export interface MindMapConfig {
     // Device identification
-    isMobile: boolean;                     // 是否为移动设备
-    language: SupportedLanguage;           // 语言设置 (默认: 'en')
+    isMobile: boolean;                     // Whether mobile device
+    language: SupportedLanguage;           // Language setting (default: 'en')
 
     // Configuration sections
     layout: LayoutConfig;

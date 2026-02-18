@@ -5,7 +5,7 @@
 
 export class EncryptionUtil {
 	private static keyPromise: Promise<CryptoKey> | null = null;
-	private static deviceInfo: string = '';
+	private static deviceInfo = '';
 
 	/**
 	 * Initialize the encryption utility with device information
@@ -56,7 +56,6 @@ export class EncryptionUtil {
 	 */
 	private static getKeyMaterial(): Uint8Array {
 		// Use provided device info or fallback to browser API
-		// eslint-disable-next-line deprecation/deprecation
 		const fallbackInfo = `obsidian-mindmap-plugin-${navigator.userAgent}-${navigator.language}`;
 		const identifier = this.deviceInfo || fallbackInfo;
 		return new TextEncoder().encode(identifier);

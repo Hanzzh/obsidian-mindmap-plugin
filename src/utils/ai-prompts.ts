@@ -9,7 +9,7 @@ export interface NodeContext {
 	parent?: string;
 	siblings?: string[];
 	existingChildren: string[];
-	centralTopic?: string; // 中心主题（根节点文本）
+	centralTopic?: string; // Central topic (root node text)
 }
 
 export class AIPrompts {

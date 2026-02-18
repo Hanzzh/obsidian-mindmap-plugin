@@ -71,7 +71,7 @@ export class FontSizeManager {
      * Get all available font sizes by depth
      * @returns Object mapping depths to font sizes
      */
-    static getAllFontSizes(): { [depth: number]: string } {
+    static getAllFontSizes(): Record<number, string> {
         return {
             0: STYLE_CONSTANTS.ROOT_FONT_SIZE,
             1: STYLE_CONSTANTS.LEVEL_1_FONT_SIZE,

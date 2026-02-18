@@ -28,8 +28,8 @@ import { DesktopInteraction } from './desktop-interaction';
  * - Advanced touch gestures
  */
 export class MobileInteraction extends DesktopInteraction {
-    private isTouchEvent: boolean = false;
-    private lastTouchTime: number = 0;
+    private isTouchEvent = false;
+    private lastTouchTime = 0;
 
     constructor(config: MindMapConfig, callbacks: InteractionCallbacks = {}) {
         // Initialize with parent class

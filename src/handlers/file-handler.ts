@@ -12,7 +12,10 @@ import { parseMarkdownContent, generateMarkdownFromNodes, isMindMapFile } from '
  * Implementation of MindMapFileHandler
  */
 export class D3FileHandler implements MindMapFileHandler {
-    constructor(private app: App) {}
+
+    constructor(private app: App) {
+		// Instance variable is used in class methods
+	}
 
     /**
      * Check if a file should be displayed as a mind map

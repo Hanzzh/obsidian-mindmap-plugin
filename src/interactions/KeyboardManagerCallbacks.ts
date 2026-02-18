@@ -8,6 +8,7 @@ import { MindMapConfig } from '../config/types';
  * 用于解耦 KeyboardManager 和 D3TreeRenderer 之间的依赖关系
  * KeyboardManager 通过这些回调与外部通信
  */
+ 
 export interface KeyboardHandlers {
 	/**
 	 * Tab键 - 添加子节点
@@ -49,6 +50,7 @@ export interface KeyboardHandlers {
 	 */
 	onRedo?: () => void;
 }
+ 
 
 /**
  * KeyboardManager 配置接口

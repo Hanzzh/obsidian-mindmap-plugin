@@ -4,25 +4,25 @@ import { TextMeasurer } from '../../utils/TextMeasurer';
 import { CoordinateConverter } from '../../utils/coordinate-system';
 
 /**
- * 连线渲染配置接口
+ * Link rendering configuration interface
  */
 export interface LinkRendererConfig {
 	lineOffset: number;
 }
 
 /**
- * 连线渲染器
+ * Link renderer
  *
- * 【职责】
- * - 渲染节点间连线
- * - 绘制三次贝塞尔曲线（root → level 1）
- * - 绘制圆角连线（其他层级）
- * - 计算连接点坐标
- * - 处理不同层级的连线样式
+ * [Responsibilities]
+ * - Render links between nodes
+ * - Draw cubic bezier curves (root → level 1)
+ * - Draw rounded links (other levels)
+ * - Calculate connection point coordinates
+ * - Handle link styles for different levels
  *
- * 【依赖】
- * - TextMeasurer: 获取节点尺寸
- * - CoordinateConverter: 坐标转换
+ * [Dependencies]
+ * - TextMeasurer: Get node dimensions
+ * - CoordinateConverter: Coordinate conversion
  */
 export class LinkRenderer {
 	private config: LinkRendererConfig;
@@ -37,12 +37,12 @@ export class LinkRenderer {
 	}
 
 	/**
-	 * 渲染所有连线
+	 * Render all links
 	 *
-	 * @param svg SVG容器
-	 * @param links D3层级连线数组
-	 * @param offsetX X轴偏移量
-	 * @param offsetY Y轴偏移量
+	 * @param svg SVG container
+	 * @param links D3 hierarchy link array
+	 * @param offsetX X-axis offset
+	 * @param offsetY Y-axis offset
 	 */
 	renderLinks(
 		svg: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -54,7 +54,7 @@ export class LinkRenderer {
 
 		if (links.length === 0) return;
 
-		// 按层级分离连线：第零层到第一层使用三次贝塞尔曲线，其他层级使用圆角连线
+		// Separate links by level: level 0 to 1 use cubic bezier curves, other levels use rounded links
 		const rootToFirstLevelLinks: d3.HierarchyLink<MindMapNode>[] = [];
 		const roundedLinks: d3.HierarchyLink<MindMapNode>[] = [];
 
@@ -66,24 +66,24 @@ export class LinkRenderer {
 			}
 		});
 
-		// 渲染第零层到第一层的三次贝塞尔曲线连接
+		// Render cubic bezier curve links from level 0 to 1
 		if (rootToFirstLevelLinks.length > 0) {
 			this.renderRootToFirstLevelCubicLinks(linkGroup, rootToFirstLevelLinks, offsetX, offsetY);
 		}
 
-		// 渲染其他层级的圆角连接
+		// Render rounded links for other levels
 		if (roundedLinks.length > 0) {
 			this.renderRoundedLinks(linkGroup, roundedLinks, offsetX, offsetY);
 		}
 	}
 
 	/**
-	 * 渲染根节点到第一层的三次贝塞尔曲线
+	 * Render cubic bezier curves from root to level 1
 	 *
-	 * @param group SVG组元素
-	 * @param links 连线数组
-	 * @param offsetX X轴偏移量
-	 * @param offsetY Y轴偏移量
+	 * @param group SVG group element
+	 * @param links Link array
+	 * @param offsetX X-axis offset
+	 * @param offsetY Y-axis offset
 	 */
 	private renderRootToFirstLevelCubicLinks(
 		group: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -98,21 +98,21 @@ export class LinkRenderer {
 			const targetX = connectionPoints.targetX;
 			const targetY = connectionPoints.targetY;
 
-			// 计算三次贝塞尔曲线的控制点
+			// Calculate cubic bezier curve control points
 			const deltaX = targetX - sourceX;
 
-			// 第一个控制点：从源节点出发，沿X轴正方向
+			// First control point: from source node, along positive X direction
 			const control1X = sourceX + deltaX * 0.3;
 			const control1Y = sourceY;
 
-			// 第二个控制点：接近目标节点，保持目标节点的Y坐标
+			// Second control point: near target node, keeping target node's Y coordinate
 			const control2X = targetX - deltaX * 0.3;
 			const control2Y = targetY;
 
-			// 创建三次贝塞尔曲线路径
+			// Create cubic bezier curve path
 			const pathData = `M ${sourceX},${sourceY} C ${control1X},${control1Y} ${control2X},${control2Y} ${targetX},${targetY}`;
 
-			// 使用统一的连线颜色
+			// Use unified link color
 			group.append("path")
 				.attr("d", pathData)
 				.attr("stroke", "#b8b8b8")
@@ -125,12 +125,12 @@ export class LinkRenderer {
 	}
 
 	/**
-	 * 渲染圆角连线（用于除0-1层外的所有其他层级）
+	 * Render rounded links (for all levels except 0-1)
 	 *
-	 * @param group SVG组元素
-	 * @param links 连线数组
-	 * @param offsetX X轴偏移量
-	 * @param offsetY Y轴偏移量
+	 * @param group SVG group element
+	 * @param links Link array
+	 * @param offsetX X-axis offset
+	 * @param offsetY Y-axis offset
 	 */
 	private renderRoundedLinks(
 		group: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -145,57 +145,57 @@ export class LinkRenderer {
 			const targetX = connectionPoints.targetX;
 			const targetY = connectionPoints.targetY;
 
-			// 生成圆角路径（使用默认8px圆角半径）
+			// Generate rounded path (using default 8px corner radius)
 			const pathData = this.generateRoundedPath(sourceX, sourceY, targetX, targetY, 8);
 
-			// 使用现有的连线颜色 #b8b8b8
+			// Use existing link color #b8b8b8
 			group.append("path")
 				.attr("d", pathData)
 				.attr("stroke", "#b8b8b8")
 				.attr("stroke-width", 2)
 				.attr("fill", "none")
 				.attr("stroke-linecap", "round")
-				.attr("stroke-linejoin", "round")  // 添加连接点圆角
+				.attr("stroke-linejoin", "round")  // Add connection point rounding
 				.style("opacity", 0.8)
 				.attr("class", "rounded-link");
 		});
 	}
 
 	/**
-	 * 生成圆角连线路径
+	 * Generate rounded link path
 	 *
-	 * @param sourceX 源节点X坐标
-	 * @param sourceY 源节点Y坐标
-	 * @param targetX 目标节点X坐标
-	 * @param targetY 目标节点Y坐标
-	 * @param cornerRadius 圆角半径
-	 * @returns SVG path d属性字符串
+	 * @param sourceX Source node X coordinate
+	 * @param sourceY Source node Y coordinate
+	 * @param targetX Target node X coordinate
+	 * @param targetY Target node Y coordinate
+	 * @param cornerRadius Corner radius
+	 * @returns SVG path d attribute string
 	 */
 	private generateRoundedPath(
 		sourceX: number,
 		sourceY: number,
 		targetX: number,
 		targetY: number,
-		cornerRadius: number = 8
+		cornerRadius = 8
 	): string {
 		const horizontalDistance = targetX - sourceX;
 		const turn1X = sourceX + horizontalDistance * 0.45;
 
-		// 智能圆角半径计算，避免过大或过小的圆角
+		// Smart corner radius calculation, avoid too large or too small corners
 		const radius = Math.min(
 			cornerRadius,
 			Math.abs(targetX - turn1X) * 0.4,
 			Math.abs(targetY - sourceY) * 0.4
 		);
 
-		// 计算圆角转折点
+		// Calculate corner turning points
 		const verticalEndY = targetY + (sourceY < targetY ? -radius : radius);
 		const cornerStartX = turn1X;
 		const cornerStartY = verticalEndY;
 		const cornerEndX = turn1X + (targetX > turn1X ? radius : -radius);
 		const cornerEndY = targetY;
 
-		// 构建圆角路径：水平线 → 垂直线 → 圆角过渡 → 水平线
+		// Build rounded path: horizontal line → vertical line → corner transition → horizontal line
 		return `M ${sourceX},${sourceY}
 			L ${turn1X},${sourceY}
 			L ${cornerStartX},${cornerStartY}
@@ -204,16 +204,16 @@ export class LinkRenderer {
 	}
 
 	/**
-	 * 计算连线连接点坐标
+	 * Calculate link connection point coordinates
 	 *
-	 * 【坐标系统】混合坐标系统
-	 * - 源节点：link.source.y (左边缘X), link.source.x (中心Y)
-	 * - 目标节点：link.target.y (左边缘X), link.target.x (中心Y)
+	 * [Coordinate System] Mixed coordinate system
+	 * - Source node: link.source.y (left edge X), link.source.x (center Y)
+	 * - Target node: link.target.y (left edge X), link.target.x (center Y)
 	 *
-	 * @param link D3层级连线对象
-	 * @param offsetX X轴偏移量
-	 * @param offsetY Y轴偏移量
-	 * @returns 连接点坐标
+	 * @param link D3 hierarchy link object
+	 * @param offsetX X-axis offset
+	 * @param offsetY Y-axis offset
+	 * @returns Connection point coordinates
 	 */
 	private getLinkConnectionPoints(
 		link: d3.HierarchyLink<MindMapNode>,
@@ -225,33 +225,33 @@ export class LinkRenderer {
 		targetX: number;
 		targetY: number;
 	} {
-		// 获取源节点和目标节点的尺寸
+		// Get source and target node dimensions
 		const sourceDimensions = this.textMeasurer.getNodeDimensions(
 			link.source.depth,
 			link.source.data.text
 		);
 
-		// 获取对应的padding值
+		// Get corresponding padding values
 		const sourcePadding = this.getNodePadding(link.source.depth);
 		const targetPadding = this.getNodePadding(link.target.depth);
 
-		// 使用坐标转换工具计算连接点
+		// Use coordinate conversion tool to calculate connection points
 		const sourceX = CoordinateConverter.toRightEdge(
-			link.source.y,           // 布局Y（左边缘）
-			sourceDimensions.width,  // 节点宽度
+			link.source.y,           // Layout Y (left edge)
+			sourceDimensions.width,  // Node width
 			sourcePadding,            // padding
-			this.config.lineOffset,   // 连线偏移
+			this.config.lineOffset,   // Link offset
 			offsetX
 		);
 
 		const targetX = CoordinateConverter.toLeftEdge(
-			link.target.y,        // 布局Y（左边缘）
+			link.target.y,        // Layout Y (left edge)
 			targetPadding,         // padding
-			this.config.lineOffset,  // 连线偏移
+			this.config.lineOffset,  // Link offset
 			offsetX
 		);
 
-		// Y坐标：布局X即中心，直接加偏移即可
+		// Y coordinate: layout X is center, just add offset
 		const sourceY = CoordinateConverter.toCanvasY(link.source.x, 0, offsetY);
 		const targetY = CoordinateConverter.toCanvasY(link.target.x, 0, offsetY);
 
@@ -259,14 +259,14 @@ export class LinkRenderer {
 	}
 
 	/**
-	 * 获取节点padding值
+	 * Get node padding value
 	 *
-	 * @param depth 节点深度
-	 * @returns padding值（像素）
+	 * @param depth Node depth
+	 * @returns Padding value (pixels)
 	 */
 	private getNodePadding(depth: number): number {
-		if (depth === 0) return 24;    // 根节点padding
-		else if (depth === 1) return 20; // 第1层padding
-		else return 16;                 // 第2层及以后padding
+		if (depth === 0) return 24;    // Root node padding
+		else if (depth === 1) return 20; // Level 1 padding
+		else return 16;                 // Level 2 and beyond padding
 	}
 }
