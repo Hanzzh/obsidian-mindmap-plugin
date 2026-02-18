@@ -96,7 +96,7 @@ export class AIAssistant {
 		// 添加点击事件处理器
 		buttonGroup.on("click", (event: MouseEvent) => {
 			event.stopPropagation();
-			this.triggerSuggestions(node);
+			void this.triggerSuggestions(node);
 		});
 
 		// 创建圆形背景（紫色）

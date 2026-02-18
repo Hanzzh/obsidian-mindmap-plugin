@@ -5287,7 +5287,7 @@ var KeyboardManager = class {
     if (!selectedNode) {
       return;
     }
-    (_b = (_a = this.handlers).onCopy) == null ? void 0 : _b.call(_a, selectedNode);
+    void ((_b = (_a = this.handlers).onCopy) == null ? void 0 : _b.call(_a, selectedNode));
   }
   /**
    * 处理 Ctrl+X / Cmd+X 快捷键 - 剪切节点
@@ -5298,7 +5298,7 @@ var KeyboardManager = class {
     if (!selectedNode) {
       return;
     }
-    (_b = (_a = this.handlers).onCut) == null ? void 0 : _b.call(_a, selectedNode);
+    void ((_b = (_a = this.handlers).onCut) == null ? void 0 : _b.call(_a, selectedNode));
   }
   /**
    * 处理 Ctrl+V / Cmd+V 快捷键 - 粘贴到节点
@@ -5309,7 +5309,7 @@ var KeyboardManager = class {
     if (!selectedNode) {
       return;
     }
-    (_b = (_a = this.handlers).onPaste) == null ? void 0 : _b.call(_a, selectedNode);
+    void ((_b = (_a = this.handlers).onPaste) == null ? void 0 : _b.call(_a, selectedNode));
   }
   /**
    * 处理 Ctrl+Z / Cmd+Z 快捷键 - 撤销
@@ -5647,7 +5647,7 @@ var AIAssistant = class {
     const buttonGroup = nodeElement.append("g").attr("class", "ai-suggest-button-group").attr("transform", `translate(${buttonX}, ${buttonY})`);
     buttonGroup.on("click", (event) => {
       event.stopPropagation();
-      this.triggerSuggestions(node);
+      void this.triggerSuggestions(node);
     });
     buttonGroup.append("circle").attr("class", "ai-suggest-button-bg").attr("cx", 10).attr("cy", 10).attr("r", 10).attr("fill", "#9333ea").style("opacity", 0.9).style("cursor", "pointer");
     buttonGroup.append("text").attr("class", "ai-suggest-button-text").attr("x", 10).attr("y", 10).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("fill", "white").attr("font-size", "14px").style("pointer-events", "none").text("\u2728");
@@ -8945,14 +8945,14 @@ var MindMapPlugin = class extends import_obsidian6.Plugin {
     this.messages = i18nManager.getMessages();
     await this.loadStyles();
     const ribbonIconEl = this.addRibbonIcon("brain", "openMindMap", (evt) => {
-      this.activateView();
+      void this.activateView();
     });
     ribbonIconEl.addClass("mind-map-ribbon-class");
     this.addCommand({
       id: "open-view",
       name: "Open mind map view",
       callback: () => {
-        this.activateView();
+        void this.activateView();
       }
     });
     this.addCommand({
@@ -8962,7 +8962,7 @@ var MindMapPlugin = class extends import_obsidian6.Plugin {
         const markdownView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
         if (markdownView) {
           if (!checking) {
-            this.activateView();
+            void this.activateView();
           }
           return true;
         }
@@ -9021,7 +9021,7 @@ var MindMapPlugin = class extends import_obsidian6.Plugin {
     this.app.workspace.onLayoutReady(async () => {
       const activeFile = this.app.workspace.getActiveFile();
       if (activeFile && await this.mindMapService.isMindMapFile(activeFile)) {
-        this.replaceWithMindMapView(activeFile);
+        void this.replaceWithMindMapView(activeFile);
       }
     });
   }
@@ -9121,7 +9121,7 @@ var MindMapPlugin = class extends import_obsidian6.Plugin {
       await (leaf == null ? void 0 : leaf.setViewState({ type: MIND_MAP_VIEW_TYPE, active: true }));
     }
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      void workspace.revealLeaf(leaf);
     }
   }
   // Create a new mindmap file with default name
@@ -9251,7 +9251,7 @@ var MindMapView = class _MindMapView extends import_obsidian6.ItemView {
     }
     if (this.needsContentLoading && this.filePath) {
       setTimeout(() => {
-        this.loadFileContent();
+        void this.loadFileContent();
       }, 10);
     }
     return Promise.resolve();
@@ -9352,7 +9352,7 @@ var MindMapView = class _MindMapView extends import_obsidian6.ItemView {
     }
     this.updateTimer = setTimeout(() => {
       this.refreshMindMapLayout();
-      this.mindMapService.saveToMarkdownFile(this.filePath, this.mindMapData.rootNode);
+      void this.mindMapService.saveToMarkdownFile(this.filePath, this.mindMapData.rootNode);
       this.updateTimer = null;
     }, 300);
   }
@@ -9362,7 +9362,7 @@ var MindMapView = class _MindMapView extends import_obsidian6.ItemView {
     const rootNode = this.mindMapData.rootNode;
     if (rootNode) {
       this.refreshMindMapLayout();
-      this.mindMapService.saveToMarkdownFile(this.filePath, rootNode);
+      void this.mindMapService.saveToMarkdownFile(this.filePath, rootNode);
     }
   }
   // 处理数据恢复（undo/redo 时调用）
@@ -9370,7 +9370,7 @@ var MindMapView = class _MindMapView extends import_obsidian6.ItemView {
     this.mindMapData = data;
     this.refreshMindMapLayout();
     if (this.filePath && data.rootNode) {
-      this.mindMapService.saveToMarkdownFile(this.filePath, data.rootNode);
+      void this.mindMapService.saveToMarkdownFile(this.filePath, data.rootNode);
     }
   }
   // 刷新思维导图布局（优化版）

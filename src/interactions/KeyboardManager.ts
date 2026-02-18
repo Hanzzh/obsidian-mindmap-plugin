@@ -186,7 +186,7 @@ export class KeyboardManager {
 			return; // 静默失败
 		}
 
-		this.handlers.onCopy?.(selectedNode);
+		void this.handlers.onCopy?.(selectedNode);
 	}
 
 	/**
@@ -198,7 +198,7 @@ export class KeyboardManager {
 			return; // 静默失败
 		}
 
-		this.handlers.onCut?.(selectedNode);
+		void this.handlers.onCut?.(selectedNode);
 	}
 
 	/**
@@ -210,7 +210,7 @@ export class KeyboardManager {
 			return; // 静默失败
 		}
 
-		this.handlers.onPaste?.(selectedNode);
+		void this.handlers.onPaste?.(selectedNode);
 	}
 
 	/**

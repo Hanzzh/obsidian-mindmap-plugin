@@ -95,7 +95,7 @@ export default class MindMapPlugin extends Plugin {
 
 		// Add ribbon icon
 		const ribbonIconEl = this.addRibbonIcon('brain', 'openMindMap', (evt: MouseEvent) => {
-			this.activateView();
+			void this.activateView();
 		});
 		ribbonIconEl.addClass('mind-map-ribbon-class');
 
@@ -104,7 +104,7 @@ export default class MindMapPlugin extends Plugin {
 			id: 'open-view',
 			name: 'Open mind map view',
 			callback: () => {
-				this.activateView();
+				void this.activateView();
 			}
 		});
 
@@ -116,7 +116,7 @@ export default class MindMapPlugin extends Plugin {
 				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (markdownView) {
 					if (!checking) {
-						this.activateView();
+						void this.activateView();
 					}
 					return true;
 				}
@@ -193,7 +193,7 @@ export default class MindMapPlugin extends Plugin {
 			// Check if current file should be mind map
 			const activeFile = this.app.workspace.getActiveFile();
 			if (activeFile && await this.mindMapService.isMindMapFile(activeFile)) {
-				this.replaceWithMindMapView(activeFile);
+				void this.replaceWithMindMapView(activeFile);
 			}
 		});
 	}
@@ -334,7 +334,7 @@ export default class MindMapPlugin extends Plugin {
 
 		// "Reveal" the leaf so it is visible to the user
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			void workspace.revealLeaf(leaf);
 		}
 	}
 
@@ -552,7 +552,7 @@ class MindMapView extends ItemView {
 		if (this.needsContentLoading && this.filePath) {
 			// Use setTimeout to avoid potential race conditions
 			setTimeout(() => {
-				this.loadFileContent();
+				void this.loadFileContent();
 			}, 10);
 		}
 
@@ -712,7 +712,7 @@ class MindMapView extends ItemView {
 			this.refreshMindMapLayout();
 
 			// 保存文件
-			this.mindMapService.saveToMarkdownFile(this.filePath!, this.mindMapData!.rootNode!);
+			void this.mindMapService.saveToMarkdownFile(this.filePath!, this.mindMapData!.rootNode!);
 
 			// 清空定时器引用
 			this.updateTimer = null;
@@ -730,7 +730,7 @@ class MindMapView extends ItemView {
 			this.refreshMindMapLayout();
 
 			// 异步保存到文件
-			this.mindMapService.saveToMarkdownFile(this.filePath!, rootNode);
+			void this.mindMapService.saveToMarkdownFile(this.filePath!, rootNode);
 		}
 	}
 
@@ -746,7 +746,7 @@ class MindMapView extends ItemView {
 
 		// 异步保存到文件
 		if (this.filePath && data.rootNode) {
-			this.mindMapService.saveToMarkdownFile(this.filePath, data.rootNode);
+			void this.mindMapService.saveToMarkdownFile(this.filePath, data.rootNode);
 		}
 	}
 
