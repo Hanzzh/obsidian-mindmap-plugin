@@ -84,18 +84,21 @@ export class ButtonRenderer {
 	renderButtons(
 		nodeElements: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>
 	): void {
-		const self = this;
-
 		// 为每个节点添加+号按钮
-		nodeElements.each(function(d) {
-			const nodeElement = d3.select(this);
-			const dimensions = self.textMeasurer.getNodeDimensions(d.depth, d.data.text);
+		const nodes = nodeElements.nodes();
+		const data = nodeElements.data();
+
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i];
+			const d = data[i];
+			const nodeElement = d3.select(node);
+			const dimensions = this.textMeasurer.getNodeDimensions(d.depth, d.data.text);
 
 			// 只为选中的节点渲染+号按钮
 			if (d.data.selected) {
-				self.renderPlusButton(nodeElement as d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>, d, dimensions);
+				this.renderPlusButton(nodeElement as d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>, d, dimensions);
 			}
-		});
+		}
 	}
 
 	/**

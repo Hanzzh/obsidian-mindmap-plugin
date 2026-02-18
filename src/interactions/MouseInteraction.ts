@@ -57,15 +57,13 @@ export class MouseInteraction {
 	attachNodeClickHandlers(
 		nodeElements: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>
 	): void {
-		const self = this;
-
 		nodeElements.each((d, i, nodes) => {
 			const nodeElement = d3.select(nodes[i]);
 			const nodeRect = nodeElement.select<SVGRectElement>(".node-rect");
 
 			// 点击事件处理器
 			nodeElement.on("click", (event: MouseEvent) => {
-				self.handleNodeClick(event, d, nodeRect as d3.Selection<SVGRectElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>);
+				this.handleNodeClick(event, d, nodeRect as d3.Selection<SVGRectElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>);
 			});
 		});
 	}
@@ -78,20 +76,18 @@ export class MouseInteraction {
 	attachNodeHoverHandlers(
 		nodeElements: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>
 	): void {
-		const self = this;
-
 		nodeElements.each((d, i, nodes) => {
 			const nodeElement = d3.select(nodes[i]);
 			const nodeRect = nodeElement.select<SVGRectElement>(".node-rect");
 
 			// 鼠标进入事件
 			nodeElement.on("mouseenter", (event: MouseEvent) => {
-				self.handleNodeHover(event, d, nodeRect as d3.Selection<SVGRectElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>);
+				this.handleNodeHover(event, d, nodeRect as d3.Selection<SVGRectElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>);
 			});
 
 			// 鼠标离开事件
 			nodeElement.on("mouseleave", (event: MouseEvent) => {
-				self.handleNodeLeave(event, d, nodeRect as any);
+				this.handleNodeLeave(event, d, nodeRect as d3.Selection<SVGRectElement, d3.HierarchyNode<MindMapNode>, SVGGElement, unknown>);
 			});
 		});
 	}

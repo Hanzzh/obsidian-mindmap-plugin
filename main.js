@@ -4901,12 +4901,11 @@ var MouseInteraction = class {
    * @param nodeElements D3 选择集，包含所有节点组
    */
   attachNodeClickHandlers(nodeElements) {
-    const self = this;
     nodeElements.each((d, i, nodes) => {
       const nodeElement = select_default2(nodes[i]);
       const nodeRect = nodeElement.select(".node-rect");
       nodeElement.on("click", (event) => {
-        self.handleNodeClick(event, d, nodeRect);
+        this.handleNodeClick(event, d, nodeRect);
       });
     });
   }
@@ -4916,15 +4915,14 @@ var MouseInteraction = class {
    * @param nodeElements D3 选择集，包含所有节点组
    */
   attachNodeHoverHandlers(nodeElements) {
-    const self = this;
     nodeElements.each((d, i, nodes) => {
       const nodeElement = select_default2(nodes[i]);
       const nodeRect = nodeElement.select(".node-rect");
       nodeElement.on("mouseenter", (event) => {
-        self.handleNodeHover(event, d, nodeRect);
+        this.handleNodeHover(event, d, nodeRect);
       });
       nodeElement.on("mouseleave", (event) => {
-        self.handleNodeLeave(event, d, nodeRect);
+        this.handleNodeLeave(event, d, nodeRect);
       });
     });
   }
@@ -6259,14 +6257,17 @@ var ButtonRenderer = class {
    * @param nodeElements D3 节点选择集
    */
   renderButtons(nodeElements) {
-    const self = this;
-    nodeElements.each(function(d) {
-      const nodeElement = select_default2(this);
-      const dimensions = self.textMeasurer.getNodeDimensions(d.depth, d.data.text);
+    const nodes = nodeElements.nodes();
+    const data = nodeElements.data();
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const d = data[i];
+      const nodeElement = select_default2(node);
+      const dimensions = this.textMeasurer.getNodeDimensions(d.depth, d.data.text);
       if (d.data.selected) {
-        self.renderPlusButton(nodeElement, d, dimensions);
+        this.renderPlusButton(nodeElement, d, dimensions);
       }
-    });
+    }
   }
   /**
    * 渲染单个节点的+号按钮
